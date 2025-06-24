@@ -1,0 +1,91 @@
+.contact-detail-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f7f7f7;
+}
+.ContactDetailPage {
+
+  .contact-header {
+    padding: 15px;
+    background-color: #ededed;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #dbdbdb;
+  }
+
+  .back-icon {
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .header-title {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .more-icon {
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .contact-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .contact-name {
+    margin: 10px 0 5px;
+    font-size: 18px;
+  }
+
+  .contact-description {
+    color: #888;
+    margin-bottom: 20px;
+  }
+
+  .action-buttons {
+    margin-bottom: 20px;
+  }
+
+  .action-button {
+    margin-bottom: 10px;
+    height: 40px;
+    background-color: #07c160;
+    border-color: #07c160;
+  }
+
+  .action-button:not(:last-child) {
+    margin-bottom: 10px;
+  }
+
+  .info-list {
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .info-list .ant-list-item {
+    padding: 12px 15px;
+  }
+
+  .info-label {
+    color: #888;
+    font-size: 14px;
+  }
+
+  .info-value {
+    color: #333;
+  }
+
+}
+

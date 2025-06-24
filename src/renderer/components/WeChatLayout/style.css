@@ -1,0 +1,13 @@
+.muenIcon {
+  display: flex!important;
+  align-items: center;
+  justify-content: center;
+}
+.WeChatLayout {
+  .sidebar {
+    background-color: #fff;
+  }
+  .sidebar-menu {
+    height: 100vh;
+  }
+}
