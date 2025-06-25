@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-let api_base = "localhost:3000/api/user/login"
+let api_base = "http://localhost:3000"
 const api_version = "/api/"
 
 type apiType = keyof typeof apiList;
@@ -13,6 +13,7 @@ const apiList = {
 
 export const apiUrl = (x:apiType) => {
     var api_url = apiList[x]
+    console.log(api_base + api_version + api_url,'api_base + api_version + api_url')
     return api_base + api_version + api_url
     // if (isProduction()) { } else { return api_base + api_version + api_url }
 }
@@ -29,6 +30,7 @@ http.interceptors.request.use((config) => {
       config.headers.Authorization = "Bearer"+" "+token;
     }
     config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    console.log(config,'config')
     return config;
 }, (error) => {
     return Promise.reject(error);

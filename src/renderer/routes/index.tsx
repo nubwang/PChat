@@ -9,7 +9,7 @@ import Login from '../pages/login';
 
 const routes = [
   {
-    path: '/',
+    path: '/chat',
     element: <Home />,
     auth: true
   },

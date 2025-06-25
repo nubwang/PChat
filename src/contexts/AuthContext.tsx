@@ -1,6 +1,6 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useState } from 'react';
-import api from "../api"
+import api from "../static/api"
 
 interface AuthContextType {
   isAuthenticated: boolean;
