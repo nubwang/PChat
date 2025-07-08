@@ -17,20 +17,24 @@ const LoginPage: React.FC = () => {
     }
     api.post("user_login",{username,password}).then((data)=>{
       if(data.code === 200){
+        initFn();
         localStorage.setItem("token",data.token)
-        navigate('/chat');
+        navigate(-1);
       }
     }).catch((err)=>{
+      setError('用户名或密码错误');
       console.log(err,'err')
     })
-    // // 模拟登录逻辑
-    // if (username === 'user' && password === 'password') {
-    //   // 登录成功，跳转到聊天页面
-    //   navigate('/chat');
-    // } else {
-    //   setError('用户名或密码错误');
-    // }
   };
+  const initFn = ()=>{
+    api.get("info_self").then((data)=>{
+      console.log(data,'info_self')
+      if(data.code === 200){
+        localStorage.setItem("userData",JSON.stringify(data.data))
+      }
+    }).catch((err)=>{
+    })
+  }
 
   return (
     <div className="login-container">

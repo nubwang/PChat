@@ -4,7 +4,6 @@
   flex-direction: column;
   background-color: #f7f7f7;
 }
-.ContactDetailPage {
 
   .contact-header {
     padding: 15px;
@@ -87,5 +86,5 @@
     color: #333;
   }
 
-}
+
 

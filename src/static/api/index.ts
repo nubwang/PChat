@@ -8,17 +8,30 @@ type apiType = keyof typeof apiList;
 const apiList = {
     user_login: 'user/login',
     uploadCOS: 'uploadCOS',
-    article_add: 'article/add'
+    article_add: 'article/add',
+    info_other: 'user/info_other',
+    friends_add: 'friends/add',
+    info_self: 'user/info_self',
+    friends_pending: 'friends/:userId/pending'
 }
 
-export const apiUrl = (x:apiType) => {
-    var api_url = apiList[x]
-    console.log(api_base + api_version + api_url,'api_base + api_version + api_url')
-    return api_base + api_version + api_url
-    // if (isProduction()) { } else { return api_base + api_version + api_url }
-}
-//h5.rubymall.com
-// AppConfig.appid = 'pg.ios.rubymall.com';
+// export const apiUrl = (x:apiType) => {
+//     var api_url = apiList[x]
+//     console.log(api_base + api_version + api_url,'api_base + api_version + api_url')
+//     return api_base + api_version + api_url
+//     // if (isProduction()) { } else { return api_base + api_version + api_url }
+// }
+
+export const apiUrl = (x: apiType, params?: Record<string, string | number>) => {
+    let api_url = apiList[x];
+    console.log(params,'params')
+    if (params) {
+        for (const key in params) {
+            api_url = api_url.replace(`:${key}`, params[key].toString());
+        }
+    }
+    return api_base + api_version + api_url;
+};
 
 const http = axios.create({});
 
@@ -37,9 +50,10 @@ http.interceptors.request.use((config) => {
 });
 
 http.interceptors.response.use((response) => {
-    console.log(response,'responseresponseresponseresponse')
     let code = response.data.code
     switch (code) {
+        case 200:
+            break
         case 401:
             break
         case 500:
@@ -82,7 +96,7 @@ const load_axios = (url:string, method:string, params:any) => {
  **/
 export const api = {
     get: (key:apiType, params:any) => {
-        var url:string = apiUrl(key);
+        var url:string = apiUrl(key,params);
         return load_axios(url, "GET", params);
     },
     post: (key:apiType, params:any) => {

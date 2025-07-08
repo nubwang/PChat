@@ -1,6 +1,6 @@
 import Home from '../pages/Home';
 import Login from '../pages/login';
-// import Contact from '../pages/Contact';
+import Contact from '../pages/Contact';
 // import UserProfile from '../pages/UserProfile';
 // import Dashboard from '../pages/Dashboard';
 // import DashboardHome from '../pages/DashboardHome';
@@ -9,7 +9,7 @@ import Login from '../pages/login';
 
 const routes = [
   {
-    path: '/chat',
+    path: '/',
     element: <Home />,
     auth: true
   },
@@ -17,10 +17,10 @@ const routes = [
     path: '/login',
     element: <Login />,
   },
-  // {
-  //   path: '/contact',
-  //   element: <Contact />,
-  // }
+  {
+    path: '/contact',
+    element: <Contact />,
+  }
   // {
   //   path: '/user/:id',
   //   element: <UserProfile />,

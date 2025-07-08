@@ -106,13 +106,13 @@
   background-color: #fff;
 }
 
-.ant-btn {
+.chat-window .ant-btn {
   margin-left: 10px;
   background-color: #07c160;
   border-color: #07c160;
 }
 
-.ant-btn:disabled {
+.chat-window .ant-btn:disabled {
   background-color: #f0f0f0;
   border-color: #d9d9d9;
   color: rgba(0, 0, 0, 0.25);
