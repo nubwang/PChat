@@ -19,7 +19,7 @@ const { Search } = Input;
 const contactsData = [
   {
     name: '张三',
-      avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+      avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
       description: '前端开发工程师',
       region: '中国 北京',
       tags: ['同事', 'IT'],
@@ -27,7 +27,7 @@ const contactsData = [
   },
   {
     name: '李四',
-      avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+      avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
       description: '产品经理',
       region: '中国 上海',
       tags: ['同事', 'IT'],
@@ -39,12 +39,12 @@ const contactsData = [
 const groupsData = [
   {
     name: '项目讨论组',
-    avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     description: '5人',
   },
   {
     name: '同学群',
-    avatar: 'https://randomuser.me/api/portraits/lego/2.jpg',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     description: '30人',
   },
   // 更多群组...
@@ -58,12 +58,12 @@ const text = `
 const data = [
   {
     name: '项目讨论组',
-    avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     description: '5人',
   },
   {
     name: '同学群',
-    avatar: 'https://randomuser.me/api/portraits/lego/2.jpg',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     description: '30人',
   },
   // 更多群组...

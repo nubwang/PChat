@@ -3,6 +3,7 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
 export type Channels = 'ipc-example';
+let navigationCallback: ((data: any) => void) | null = null;
 
 const electronHandler = {
   ipcRenderer: {
@@ -32,6 +33,30 @@ contextBridge.exposeInMainWorld('electronChat', {
   },
   cache: {
     // 后续可扩展 IndexedDB 操作
+  }
+});
+contextBridge.exposeInMainWorld('electronAPI', {
+  navigate: (path: string, action: 'push' | 'replace' = 'push') => {
+    ipcRenderer.send('NAVIGATE_TO', { path, action });
+  },
+  onNavigate: (callback: (data: { path: string; action: string }) => void) => {
+    // 移除旧监听器
+    if (navigationCallback) {
+      ipcRenderer.removeListener('REACT_NAVIGATE', navigationCallback);
+    }
+    
+    navigationCallback = callback;
+    ipcRenderer.on('REACT_NAVIGATE', (_, data) => {
+      if (navigationCallback) {
+        navigationCallback(data); // 安全调用
+      }
+    });
+  },
+  removeNavigationListener: () => {
+    if (navigationCallback) {
+      ipcRenderer.removeListener('REACT_NAVIGATE', navigationCallback);
+      navigationCallback = null;
+    }
   }
 });
 

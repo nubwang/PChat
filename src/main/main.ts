@@ -35,6 +35,14 @@ ipcMain.on('ipc-example', async (event, arg) => {
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
 });
+ipcMain.on('NAVIGATE_TO', (_, { path, action }) => {
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('REACT_NAVIGATE', { 
+      path,
+      action: action || 'push' // 确保默认值
+    });
+  }
+});
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -80,6 +88,9 @@ const createWindow = async () => {
     height: 728,
     icon: getAssetPath('icon.png'),
     webPreferences: {
+      contextIsolation: true, // 必须为 true 以确保安全
+      sandbox: true,
+      nodeIntegration: false,
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),

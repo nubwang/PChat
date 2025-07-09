@@ -1,4 +1,3 @@
-// src/utils/history.js
+// src/utils/history.ts
 import { createBrowserHistory } from 'history';
-
-export const history = createBrowserHistory();
+export const customHistory = createBrowserHistory();

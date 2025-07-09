@@ -5,10 +5,11 @@ import './App.css';
 import Home from './pages/Home'
 import routes from './routes'
 import Login from './pages/login';
+import { customHistory } from '../static/utils/router';
 
 export default function App() {
   return (
-    <Router>
+    <Router history={customHistory}>
       <Routes>
         {
           routes.map((route,index)=>(

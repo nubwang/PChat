@@ -1,4 +1,27 @@
 import axios from 'axios'
+// src/api/index.ts (或你的工具文件)
+export const navigateTo = (
+  path: string, 
+  action: 'push' | 'replace' = 'push',
+  params?: Record<string, string> // 可选：携带路由参数
+) => {
+  // 开发环境打印调试信息
+  console.log('[Navigation]', { path, action, params });
+  
+  if (window.electronAPI) {
+    // Electron 环境：通过 IPC 跳转
+    window.electronAPI.navigate(path, action);
+  } else {
+    // 非 Electron 环境（如浏览器）
+    const hashPath = `#${path}${params ? '?' + new URLSearchParams(params).toString() : ''}`;
+    
+    if (action === 'replace') {
+      window.location.replace(hashPath); // 替换当前历史记录
+    } else {
+      window.location.hash = hashPath; // 默认 push 方式
+    }
+  }
+};
 
 let api_base = "http://localhost:3000"
 const api_version = "/api/"
@@ -12,7 +35,8 @@ const apiList = {
     info_other: 'user/info_other',
     friends_add: 'friends/add',
     info_self: 'user/info_self',
-    friends_pending: 'friends/:userId/pending'
+    friends_pending: 'friends/:userId/pending',
+    friends_test: 'friends/test'
 }
 
 // export const apiUrl = (x:apiType) => {
@@ -24,7 +48,6 @@ const apiList = {
 
 export const apiUrl = (x: apiType, params?: Record<string, string | number>) => {
     let api_url = apiList[x];
-    console.log(params,'params')
     if (params) {
         for (const key in params) {
             api_url = api_url.replace(`:${key}`, params[key].toString());
@@ -43,7 +66,6 @@ http.interceptors.request.use((config) => {
       config.headers.Authorization = "Bearer"+" "+token;
     }
     config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    console.log(config,'config')
     return config;
 }, (error) => {
     return Promise.reject(error);
@@ -55,6 +77,9 @@ http.interceptors.response.use((response) => {
         case 200:
             break
         case 401:
+            console.log(window.location,'window.location.pathname')
+            navigateTo('/login', 'replace');
+            localStorage.removeItem('token'); // 清除无效 token
             break
         case 500:
         case 20101:

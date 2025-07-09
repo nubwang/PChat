@@ -17,14 +17,14 @@ const ChatWindow: React.FC = () => {
     <div className="chat-window">
       <div className="chat-header">
         <div className="chat-header-info">
-          <Avatar src="https://randomuser.me/api/portraits/men/1.jpg" />
+          <Avatar src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s" />
           <span className="chat-title">张三</span>
         </div>
       </div>
       <div className="message-container">
         {/* 这里放置消息列表 */}
         <div className="message-item received">
-          <Avatar src="https://randomuser.me/api/portraits/men/1.jpg" />
+          <Avatar src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s" />
           <div className="message-content">
             <div className="message-text">你好，最近怎么样？</div>
             <div className="message-time">10:30</div>
@@ -35,7 +35,7 @@ const ChatWindow: React.FC = () => {
             <div className="message-text">我很好，谢谢！</div>
             <div className="message-time">10:32</div>
           </div>
-          <Avatar src="https://randomuser.me/api/portraits/women/44.jpg" />
+          <Avatar src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s" />
         </div>
       </div>
       <div className="input-area">

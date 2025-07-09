@@ -3,28 +3,28 @@ import { Input, List, Avatar, Button, Modal,Search, Divider, Typography, Empty, 
 import { SearchOutlined,UserAddOutlined,UserOutlined } from '@ant-design/icons';
 import './style.css';
 import { api } from "../../../static/api";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 
 const { Search,TextArea } = Input;
 
 const chatData = [
   {
     title: '张三',
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     lastMessage: '你好，最近怎么样？',
     time: '10:30',
     unread: 2,
   },
   {
     title: '李四',
-    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     lastMessage: '项目进展如何？',
     time: '昨天',
     unread: 0,
   },
   {
     title: '王二麻子',
-    avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     lastMessage: '啦啦啦',
     time: '前天',
     unread: 10,
@@ -34,6 +34,7 @@ const chatData = [
 
 
 const ChatList: React.FC = () => {
+  const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading,setLoading] = useState(false);
   const [value,setValue] = useState("")
@@ -49,9 +50,14 @@ const ChatList: React.FC = () => {
     setSlefInfo(data);
   },[])
   const showModal = () => {
+    // friends_test: 'friends/test'
     // navigate("/contact")
     // window.location.href = '/contact';
     // setIsModalOpen(true);
+    console.log(location,'location')
+    api.get("friends_test").then((data)=>{
+      console.log(data,'1111')
+    }).catch((err)=>{})
   };
 
   const handleOk = () => {

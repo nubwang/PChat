@@ -19,7 +19,7 @@ const LoginPage: React.FC = () => {
       if(data.code === 200){
         initFn();
         localStorage.setItem("token",data.token)
-        navigate(-1);
+        navigate("/");
       }
     }).catch((err)=>{
       setError('用户名或密码错误');
