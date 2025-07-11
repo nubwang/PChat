@@ -1,6 +1,7 @@
 import Home from '../pages/Home';
 import Login from '../pages/login';
 import Contact from '../pages/Contact';
+import About from '../pages/Contact';
 // import UserProfile from '../pages/UserProfile';
 // import Dashboard from '../pages/Dashboard';
 // import DashboardHome from '../pages/DashboardHome';
@@ -20,6 +21,10 @@ const routes = [
   {
     path: '/contact',
     element: <Contact />,
+  },
+  {
+    path: '/about',
+    element: <About />,
   }
   // {
   //   path: '/user/:id',

@@ -51,13 +51,13 @@ const ChatList: React.FC = () => {
   },[])
   const showModal = () => {
     // friends_test: 'friends/test'
-    // navigate("/contact")
+    navigate("/contact")
     // window.location.href = '/contact';
     // setIsModalOpen(true);
-    console.log(location,'location')
-    api.get("friends_test").then((data)=>{
-      console.log(data,'1111')
-    }).catch((err)=>{})
+    // console.log(location,'location')
+    // api.get("friends_test").then((data)=>{
+    //   console.log(data,'1111')
+    // }).catch((err)=>{})
   };
 
   const handleOk = () => {

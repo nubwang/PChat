@@ -77,7 +77,6 @@ http.interceptors.response.use((response) => {
         case 200:
             break
         case 401:
-            console.log(window.location,'window.location.pathname')
             navigateTo('/login', 'replace');
             localStorage.removeItem('token'); // 清除无效 token
             break

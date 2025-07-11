@@ -6,10 +6,28 @@ import Home from './pages/Home'
 import routes from './routes'
 import Login from './pages/login';
 import { customHistory } from '../static/utils/router';
+import { useNavigate,useLocation } from 'react-router-dom';
 
-export default function App() {
+function AppContent() {
+  const navigate = useNavigate();
+  useEffect(()=>{
+    let token = localStorage.getItem("token");
+    if(!token) navigate("/login")
+  },[])
+  useEffect(() => {
+    if (!window.electronAPI) return;
+
+    const handleNavigation = ({ path, action }: { path: string; action: 'push' | 'replace' }) => {
+      navigate(path, { replace: action === 'replace' });
+    };
+
+    window.electronAPI.onNavigate(handleNavigation);
+
+    return () => {
+      window.electronAPI?.removeNavigationListener(); // 安全清理
+    };
+  }, [navigate]);
   return (
-    <Router history={customHistory}>
       <Routes>
         {
           routes.map((route,index)=>(
@@ -27,6 +45,12 @@ export default function App() {
           ))
         }
       </Routes>
+  );
+}
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
