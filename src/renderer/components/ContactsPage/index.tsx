@@ -18,7 +18,7 @@ const { Search } = Input;
 
 const contactsData = [
   {
-    name: '张三',
+    name: '张三1',
       avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
       description: '前端开发工程师',
       region: '中国 北京',
@@ -38,7 +38,7 @@ const contactsData = [
 
 const groupsData = [
   {
-    name: '项目讨论组',
+    name: '项目讨论组1',
     avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
     description: '5人',
   },
@@ -84,6 +84,8 @@ interface ContactsPageProps {
 const ContactsPage: React.FC<ContactsPageProps> = ({itemOnClick}) => {
   const [friendsPending,setFriendsPending] = useState([]);
   const navigate = useNavigate();
+  const [newFriend,setNewFriend] = useState([]);
+  
 
   useEffect(()=>{
     getPendingFriend()
@@ -91,11 +93,11 @@ const ContactsPage: React.FC<ContactsPageProps> = ({itemOnClick}) => {
   //获取好友请求
   const getPendingFriend = ()=>{
    let { id } = localStorage.getItem('userData')?JSON.parse(localStorage.getItem('userData')):null;
-  //  console.log(userData,"userData")
-    api.get('friends_pending',{ "userId": id}).then((data)=>{
-      console.log(data,'1111')
-      if(data.code === 401)navigate("/login")
-    }).catch((err)=>{})
+   console.log(id,"userData")
+    // api.get('friends_pending',{ "userId": id}).then((data)=>{
+    //   console.log(data,'1111')
+    //   if(data.code === 401)navigate("/login")
+    // }).catch((err)=>{})
   }
   const onChange = ()=>{
 

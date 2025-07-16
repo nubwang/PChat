@@ -1,5 +1,5 @@
 import axios from 'axios'
-// src/api/index.ts (或你的工具文件)
+import { store } from '../../renderer/store/store';
 export const navigateTo = (
   path: string, 
   action: 'push' | 'replace' = 'push',
@@ -33,10 +33,10 @@ const apiList = {
     uploadCOS: 'uploadCOS',
     article_add: 'article/add',
     info_other: 'user/info_other',
-    friends_add: 'friends/add',
     info_self: 'user/info_self',
-    friends_pending: 'friends/:userId/pending',
-    friends_test: 'friends/test'
+    friends_add: 'friends/add',
+    friends_test: 'friends/test',
+    friends_pending: 'friends/:userId/pending'
 }
 
 // export const apiUrl = (x:apiType) => {

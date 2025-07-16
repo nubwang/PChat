@@ -165,19 +165,6 @@ const ChatList: React.FC = () => {
           :
           <Empty />
         }
-        {/* <List
-          className="info-list"
-          itemLayout="horizontal"
-          dataSource={infoItems}
-          renderItem={(item) => (
-            <List.Item>
-              <List.Item.Meta
-                title={<span className="info-label">{item.label}</span>}
-                description={<span className="info-value">{item.value}</span>}
-              />
-            </List.Item>
-          )} */}
-        {/* /> */}
       </Modal>
       <List
         itemLayout="horizontal"

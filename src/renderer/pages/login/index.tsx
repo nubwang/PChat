@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 import './style.css'; // 样式文件
 import { api } from '../../../static/api'
 
@@ -8,6 +10,9 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+   const { currentPath, previousPath } = useSelector(
+    (state: RootState) => state.router
+  );
 
   const handleLogin = () => {
     console.log(api,'api')
@@ -17,9 +22,11 @@ const LoginPage: React.FC = () => {
     }
     api.post("user_login",{username,password}).then((data)=>{
       if(data.code === 200){
-        initFn();
-        localStorage.setItem("token",data.token)
-        navigate("/");
+        // initFn();
+        localStorage.setItem("token",data.data.token)
+        localStorage.setItem("userData",JSON.stringify(data.data?.data[0]))
+        let str = currentPath == previousPath?"/":previousPath
+        navigate(str);
       }
     }).catch((err)=>{
       setError('用户名或密码错误');
@@ -30,7 +37,7 @@ const LoginPage: React.FC = () => {
     api.get("info_self").then((data)=>{
       console.log(data,'info_self')
       if(data.code === 200){
-        localStorage.setItem("userData",JSON.stringify(data.data))
+        
       }
     }).catch((err)=>{
     })

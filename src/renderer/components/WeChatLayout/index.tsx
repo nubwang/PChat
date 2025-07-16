@@ -11,9 +11,28 @@ import ChatList from '../ChatList';
 import ChatWindow from '../ChatWindow';
 import ContactsPage from '../ContactsPage';
 import ContactDetailPage from '../ContactDetailPage';
+import type { MenuProps } from 'antd';
 import './style.css';
 
 const { Sider, Content } = Layout;
+type MenuItem = Required<MenuProps>['items'][number];
+const items: MenuItem[] = [
+  {
+    label: '',
+    key: '1',
+    icon: <WechatOutlined style={{ fontSize: '26px' }} />,
+  },
+  {
+    label: '',
+    key: '2',
+    icon: <ContactsOutlined style={{ fontSize: '26px'}} />,
+  },
+  {
+    label: '',
+    key: '3',
+    icon: <SettingOutlined style={{ fontSize: '26px'}} />,
+  }
+]
 
 const WeChatLayout: React.FC = () => {
   const [selectedKey, setSelectedKey] = useState<string>('1');
@@ -32,10 +51,8 @@ const WeChatLayout: React.FC = () => {
           defaultSelectedKeys={['1']}
           onSelect={(i)=>{setSelectedKey(i.key)}}
           className="sidebar-menu"
+          items={items}
         >
-          <Menu.Item key="1" className='muenIcon' icon={<WechatOutlined style={{ fontSize: '26px', color: selectedKey == "1" ?'#08c':'#bbb' }} />} />
-          <Menu.Item key="2" className='muenIcon' icon={<ContactsOutlined style={{ fontSize: '26px', color: selectedKey == "2" ?'#08c':'#bbb' }} />} />
-          <Menu.Item key="4" className='muenIcon' icon={<SettingOutlined style={{ fontSize: '26px', color: selectedKey == "4" ?'#08c':'#bbb' }} />} />
         </Menu>
       </Sider>
       <Sider width={300} className="chat-list-sidebar">
