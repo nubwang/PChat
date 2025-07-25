@@ -43,6 +43,8 @@ const ChatList: React.FC = () => {
   const [addData,setAddData] = useState(null);
   const [slefInfo,setSlefInfo] = useState(null);
   const [messageApi, contextHolder] = message.useMessage();
+  const [leaveMessage,setLeaveMessage] = useState("");
+  const [remarks,setRemarks] = useState("");
   const navigate = useNavigate();
 
   useEffect(()=>{
@@ -51,9 +53,9 @@ const ChatList: React.FC = () => {
   },[])
   const showModal = () => {
     // friends_test: 'friends/test'
-    navigate("/contact")
+    // navigate("/contact")
     // window.location.href = '/contact';
-    // setIsModalOpen(true);
+    setIsModalOpen(true);
     // console.log(location,'location')
     // api.get("friends_test").then((data)=>{
     //   console.log(data,'1111')
@@ -68,7 +70,7 @@ const ChatList: React.FC = () => {
     let params = {
       userId: slefInfo.id,
       friendId: addData.id,
-      notes: JSON.stringify([ {nickname: slefInfo.nickname,head_img: slefInfo.head_img,userId: slefInfo.id,remarks: "大傻子",message:"加好友"} ])
+      notes: JSON.stringify([ {nickname: slefInfo.nickname,head_img: slefInfo.head_img,userId: slefInfo.id,remarks: remarks,leaveMessage:leaveMessage} ])
     }
     api.post("friends_add",params).then((data)=>{
       console.log(data,'1111')
@@ -106,11 +108,16 @@ const ChatList: React.FC = () => {
   const actionItems = [
     { label: '发消息', action: () => message.info('开始聊天') },
   ];
-  const onChangeApply = ()=>{
-
-  }
   const listFn = ()=>{
   }
+  const leaveMessageFn = (e)=>{
+    console.log('11111',e.target.value)
+    setLeaveMessage(e.target.value)
+  }
+  const remarksFn = (e)=>{
+    setRemarks(e.target.value)
+  }
+
   return (
     <div className="chat-list-container">
       {contextHolder}
@@ -143,12 +150,12 @@ const ChatList: React.FC = () => {
           <>
             <div>
               <Typography.Title level={5}>发送添加朋友申请</Typography.Title>
-              <TextArea maxLength={100} onChange={onChangeApply} placeholder="留言" style={{ height: 80, resize: 'none',backgroundColor: '#fff' }} />
+              <TextArea value={leaveMessage} onChange={leaveMessageFn} maxLength={100} placeholder="留言" style={{ height: 80, resize: 'none',backgroundColor: '#fff' }} />
             </div>
             <Divider />
             <div>
               <Typography.Title level={5}>设置备注</Typography.Title>
-              <Input placeholder="备注" />
+              <Input value={remarks} onChange={remarksFn} placeholder="备注" />
             </div>
             <Divider />
           </>

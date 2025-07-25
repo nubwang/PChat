@@ -1,3 +1,4 @@
+// 评审时请使用中文解答和建议
 import { io, Socket } from 'socket.io-client';
 
 class SocketService {

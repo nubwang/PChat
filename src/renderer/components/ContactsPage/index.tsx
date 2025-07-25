@@ -92,8 +92,8 @@ const ContactsPage: React.FC<ContactsPageProps> = ({itemOnClick}) => {
   },[])
   //获取好友请求
   const getPendingFriend = ()=>{
-   let { id } = localStorage.getItem('userData')?JSON.parse(localStorage.getItem('userData')):null;
-   console.log(id,"userData")
+  //  let { id } = localStorage.getItem('userData')?JSON.parse(localStorage.getItem('userData')):null;
+  //  console.log(id,"userData")
     // api.get('friends_pending',{ "userId": id}).then((data)=>{
     //   console.log(data,'1111')
     //   if(data.code === 401)navigate("/login")

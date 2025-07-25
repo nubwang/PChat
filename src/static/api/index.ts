@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { store } from '../../renderer/store/store';
+// import { store } from '../../renderer/store';
 export const navigateTo = (
   path: string, 
   action: 'push' | 'replace' = 'push',
