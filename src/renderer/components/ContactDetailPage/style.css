@@ -1,4 +1,5 @@
 .contact-detail-container {
+  flex-grow: 1;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -53,14 +54,14 @@
   }
 
   .action-buttons {
+    display: flex;
+    justify-content: space-around;
     margin-bottom: 20px;
   }
 
   .action-button {
-    margin-bottom: 10px;
+    width: 200px;
     height: 40px;
-    background-color: #07c160;
-    border-color: #07c160;
   }
 
   .action-button:not(:last-child) {

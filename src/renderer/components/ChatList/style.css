@@ -4,6 +4,11 @@
   flex-direction: column;
   background-color: #fff;
 }
+.slef-container {
+  flex-grow: 1;
+  height: 100%;
+  display: flex;
+}
 .ant-modal-title {
   text-align: center;
 }

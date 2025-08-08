@@ -1,32 +1,73 @@
 import React,{ useEffect,useState } from 'react';
 import { Avatar, Button, Divider, List } from 'antd';
 import { LeftOutlined, MoreOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './style.css';
+import { api } from "../../../static/api";
 
 const ContactDetailPage: React.FC = ({contactData}) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [infoItems,setInfoItems] = useState([]);
-  const [contact,setContact] = useState({});
+  const [contact,setContact] = useState(null);
+  const [num,setNum] = useState(0);
   useEffect(()=>{
     if(contactData){
-      let data = JSON.parse(contactData);
+      let { data, type } = contactData;
       setContact(data);
       setInfoItems([
-        { label: '地区', value: data.region },
-        { label: '备注名', value: data.note || '无' },
-        { label: '标签', value: data.tags?.join('，') || '无' },
-        { label: '性别', value: data.gender },
+        { label: '地区', value: data.region || '隐藏' },
+        { label: '备注名', value: Array.isArray(contact?.notes) && contact.notes.length > 0 ? contact.notes[0]?.remarks : '无' },
+        { label: '标签', value: data?.tags?.join('，') || '无' },
+        { label: '性别', value: data.gender || '隐藏' },
       ])
     }
-    console.log(contact,infoItems,'contactData')
   },[contactData])
 
-  const actionItems = [
-    { label: '发消息', action: () => message.info('开始聊天') },
-  ];
+  
+  //下面写一个按钮接受的方法
+  const handleAccept = () => {
+    // 处理接受逻辑
+    console.log('接受好友请求');
+    // 可以在这里调用 API 或更新状态
+    let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+    api.post("friends_accept",{friendId: data.id,userId: contact.id}).then((data)=>{
+      console.log(data,'1111')
+      if(data.code === 200){
+        setNum(num + 1);
+      }
+    }).catch((err)=>{})
+  };
 
+  // 拒绝按钮
+  const handleReject = () => {
+    // 处理拒绝逻辑
+    console.log('拒绝好友请求');
+    // 可以在这里调用 API 或更新状态
+    let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+    api.post("friends_reject",{friendId: data.id,userId: contact.id}).then((data)=>{
+      console.log(data,'1111')
+      if(data.code === 200){
+        setNum(num - 1);
+      }
+    }).catch((err)=>{})
+  };
+  let actionItems = [];
+  if(contactData&&contactData.type === 'pending'){
+    actionItems = [
+      { label: '接受', action: () => handleAccept(),type: 'cyan' },
+      { label: '拒绝', action: () => handleReject(),type: 'default' },
+    ];
+  }else{
+    actionItems = [
+      { label: '发送消息', action: () => sendMessage(),type: 'cyan' },
+    ];
+  }
+  const sendMessage = () => {
+    // 发送消息逻辑
+    console.log('发送消息');
+    // 可以在这里调用 API 或更新状态
+    navigate('/chat', { state: { contact } });
+  };
 
 
   return (
@@ -40,27 +81,33 @@ const ContactDetailPage: React.FC = ({contactData}) => {
         <MoreOutlined className="more-icon" />
       </div>
       <div className="contact-content">
-        <div className="profile-section">
-          <Avatar src={contact.avatar} size={80} />
-          <h3 className="contact-name">{contact.name}</h3>
-          <p className="contact-description">{contact.description}</p>
-        </div>
+        {
+          contact?
+          <>
+            <div className="profile-section">
+              <Avatar src={contact.head_img} size={80} />
+              <h3 className="contact-name">{contact.username}</h3>
+              <p className="contact-description">{Array.isArray(contact?.notes) && contact.notes.length > 0 ? contact.notes[0]?.leaveMessage : ''}</p>
+            </div>
 
-        <div className="action-buttons">
-          {actionItems.map((item, index) => (
-            <Button
-              key={index}
-              type="primary"
-              block
-              className="action-button"
-              onClick={item.action}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>
+            <div className="action-buttons">
+              {actionItems.map((item, index) => (
+                <Button
+                  key={index}
+                  color={item.type}
+                  variant="solid"
+                  className="action-button"
+                  onClick={item.action}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+            <Divider />
+          </>
+          :null
+        }
 
-        <Divider />
 
         <List
           className="info-list"

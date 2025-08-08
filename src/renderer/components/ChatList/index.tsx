@@ -2,8 +2,10 @@ import React, { useState,useEffect } from 'react';
 import { Input, List, Avatar, Button, Modal,Search, Divider, Typography, Empty, message } from 'antd';
 import { SearchOutlined,UserAddOutlined,UserOutlined } from '@ant-design/icons';
 import './style.css';
+import ChatWindow from '../ChatWindow';
 import { api } from "../../../static/api";
 import { useNavigate,useLocation } from 'react-router-dom';
+import { useSocket } from '../../store/useSocket';
 
 const { Search,TextArea } = Input;
 
@@ -46,6 +48,7 @@ const ChatList: React.FC = () => {
   const [leaveMessage,setLeaveMessage] = useState("");
   const [remarks,setRemarks] = useState("");
   const navigate = useNavigate();
+  const { sendMessage,subscribe } = useSocket();
 
   useEffect(()=>{
     let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
@@ -72,11 +75,21 @@ const ChatList: React.FC = () => {
       friendId: addData.id,
       notes: JSON.stringify([ {nickname: slefInfo.nickname,head_img: slefInfo.head_img,userId: slefInfo.id,remarks: remarks,leaveMessage:leaveMessage} ])
     }
-    api.post("friends_add",params).then((data)=>{
-      console.log(data,'1111')
-      messageApi.info(data.message);
-      if(data.code === 401)navigate("/login")
-    }).catch((err)=>{})
+    sendMessage("addFriend", params);
+    //privateMessage
+    subscribe("privateMessage", (data) => { 
+      console.log(data,'addFriend');
+      if(data.code === 200){
+        messageApi.info(data.message);
+      }else{
+        messageApi.error(data.message);
+      }
+    });
+    // api.post("friends_add",params).then((data)=>{
+    //   console.log(data,'1111')
+    //   messageApi.info(data.message);
+    //   if(data.code === 401)navigate("/login")
+    // }).catch((err)=>{})
   };
 
   const handleCancel = () => {
@@ -119,80 +132,84 @@ const ChatList: React.FC = () => {
   }
 
   return (
-    <div className="chat-list-container">
-      {contextHolder}
-      <div className="search-bar">
-        <Search
-          placeholder="搜索"
-          allowClear
-          prefix={<SearchOutlined />}
-          style={{ width: '100%' }}
+    <div className="slef-container">
+      <div className="chat-list-container">
+        {contextHolder}
+        <div className="search-bar">
+          <Search
+            placeholder="搜索"
+            allowClear
+            prefix={<SearchOutlined />}
+            style={{ width: '100%' }}
+          />
+          <Button type="default" color={"#bbb"} style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UserAddOutlined />} onClick={showModal}></Button>
+        </div>
+        <Modal
+          title="申请添加朋友"
+          closable={{ 'aria-label': 'Custom Close Button' }}
+          open={isModalOpen}
+          mask={false}
+          closable={false}
+          okText={"确定"}
+          cancelText={"取消"}
+          cancelButtonProps={}
+          onOk={handleOk}
+          onCancel={handleCancel}
+        >
+          <Divider />
+          <Search value={value} onChange={onInput} placeholder="输入用户名手机号或者编号" addonBefore={<div>联系人</div>} prefix={<UserOutlined />} loading={loading} onPressEnter={onPressEnter} onSearch={onSearch} />
+          <Divider />
+          {
+            addData && slefInfo.id != addData.id?
+            <>
+              <div>
+                <Typography.Title level={5}>发送添加朋友申请</Typography.Title>
+                <TextArea value={leaveMessage} onChange={leaveMessageFn} maxLength={100} placeholder="留言" style={{ height: 80, resize: 'none',backgroundColor: '#fff' }} />
+              </div>
+              <Divider />
+              <div>
+                <Typography.Title level={5}>设置备注</Typography.Title>
+                <Input value={remarks} onChange={remarksFn} placeholder="备注" />
+              </div>
+              <Divider />
+            </>
+            :
+            null
+          }
+          {
+            addData?
+            <div className="profile-section">
+              <Avatar src={addData?.head_img} size={60} />
+              <h3 className="contact-name">{addData?.nickname}</h3>
+              <p className="contact-description">{addData?.id}</p>
+            </div>
+            :
+            <Empty />
+          }
+        </Modal>
+        <List
+          itemLayout="horizontal"
+          dataSource={chatData}
+          renderItem={(item) => (
+            <List.Item className="chat-item">
+              <List.Item.Meta
+                avatar={<Avatar src={item.avatar} />}
+                title={<span>{item.title}</span>}
+                description={item.lastMessage}
+                onClick={listFn}
+              />
+              <div className="chat-item-right">
+                <span className="time">{item.time}</span>
+                {item.unread > 0 && (
+                  <span className="unread-badge">{item.unread}</span>
+                )}
+              </div>
+            </List.Item>
+          )}
         />
-        <Button type="default" color={"#bbb"} style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UserAddOutlined />} onClick={showModal}></Button>
       </div>
-      <Modal
-        title="申请添加朋友"
-        closable={{ 'aria-label': 'Custom Close Button' }}
-        open={isModalOpen}
-        mask={false}
-        closable={false}
-        okText={"确定"}
-        cancelText={"取消"}
-        cancelButtonProps={}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      >
-        <Divider />
-        <Search value={value} onChange={onInput} placeholder="输入用户名手机号或者编号" addonBefore={<div>联系人</div>} prefix={<UserOutlined />} loading={loading} onPressEnter={onPressEnter} onSearch={onSearch} />
-        <Divider />
-        {
-          addData && slefInfo.id != addData.id?
-          <>
-            <div>
-              <Typography.Title level={5}>发送添加朋友申请</Typography.Title>
-              <TextArea value={leaveMessage} onChange={leaveMessageFn} maxLength={100} placeholder="留言" style={{ height: 80, resize: 'none',backgroundColor: '#fff' }} />
-            </div>
-            <Divider />
-            <div>
-              <Typography.Title level={5}>设置备注</Typography.Title>
-              <Input value={remarks} onChange={remarksFn} placeholder="备注" />
-            </div>
-            <Divider />
-          </>
-          :
-          null
-        }
-        {
-          addData?
-          <div className="profile-section">
-            <Avatar src={addData?.head_img} size={60} />
-            <h3 className="contact-name">{addData?.nickname}</h3>
-            <p className="contact-description">{addData?.id}</p>
-          </div>
-          :
-          <Empty />
-        }
-      </Modal>
-      <List
-        itemLayout="horizontal"
-        dataSource={chatData}
-        renderItem={(item) => (
-          <List.Item className="chat-item">
-            <List.Item.Meta
-              avatar={<Avatar src={item.avatar} />}
-              title={<span>{item.title}</span>}
-              description={item.lastMessage}
-              onClick={listFn}
-            />
-            <div className="chat-item-right">
-              <span className="time">{item.time}</span>
-              {item.unread > 0 && (
-                <span className="unread-badge">{item.unread}</span>
-              )}
-            </div>
-          </List.Item>
-        )}
-      />
+      <ChatWindow />
+
     </div>
   );
 };

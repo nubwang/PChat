@@ -41,8 +41,8 @@ export const connectSocket = createAsyncThunk(
       await Promise.race([connectPromise, timeout]);
       return true;
     } catch (error) {
-      dispatch(errorOccurred(error instanceof Error ? error.message : 'Connection failed'));
-      return rejectWithValue(error);
+      dispatch(errorOccurred(error instanceof Error ? error.message : String(error)));
+      return rejectWithValue(error instanceof Error ? error.message : String(error));
     }
   }
 );
@@ -56,7 +56,7 @@ export const disconnectSocket = createAsyncThunk(
       return true;
     } catch (error) {
       dispatch(errorOccurred(error instanceof Error ? error.message : 'Disconnection failed'));
-      return rejectWithValue(error);
+      return rejectWithValue(error instanceof Error ? error.message : String(error));
     }
   }
 );
@@ -73,7 +73,7 @@ export const joinRoom = createAsyncThunk(
       return room;
     } catch (error) {
       dispatch(errorOccurred(error instanceof Error ? error.message : 'Failed to join room'));
-      return rejectWithValue(error);
+      return rejectWithValue(error instanceof Error ? error.message : String(error));
     }
   }
 );
@@ -86,7 +86,7 @@ export const leaveRoom = createAsyncThunk(
       return room;
     } catch (error) {
       dispatch(errorOccurred(error instanceof Error ? error.message : 'Failed to leave room'));
-      return rejectWithValue(error);
+      return rejectWithValue(error instanceof Error ? error.message : String(error));
     }
   }
 );
@@ -99,7 +99,7 @@ export const sendSocketMessage = createAsyncThunk(
       return response;
     } catch (error) {
       dispatch(errorOccurred(error instanceof Error ? error.message : 'Failed to send message'));
-      return rejectWithValue(error);
+      return rejectWithValue(error instanceof Error ? error.message : String(error));
     }
   }
 );
@@ -114,7 +114,7 @@ export const reconnectSocket = createAsyncThunk(
       return true;
     } catch (error) {
       dispatch(errorOccurred(error instanceof Error ? error.message : 'Reconnection failed'));
-      return rejectWithValue(error);
+      return rejectWithValue(error instanceof Error ? error.message : String(error));
     }
   }
 );

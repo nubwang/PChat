@@ -10,7 +10,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
-import { api } from '../../../static/api'
+import { api } from '../../../static/api';
+import { useSocket } from '../../store/useSocket';
+import ContactDetailPage from '../ContactDetailPage';
 
 const { TabPane } = Tabs;
 const { Content, Header } = Layout;
@@ -77,30 +79,38 @@ interface ContactType {
   description: string;
   // 其他联系人属性
 }
-interface ContactsPageProps {
-  itemOnClick: (contact: ContactType) => void;
-}
 //friends_pending
-const ContactsPage: React.FC<ContactsPageProps> = ({itemOnClick}) => {
+const ContactsPage: React.FC<ContactsPageProps> = ({}) => {
   const [friendsPending,setFriendsPending] = useState([]);
+  const [friendAccepted,setFriendAccepted] = useState([]);
   const navigate = useNavigate();
   const [newFriend,setNewFriend] = useState([]);
-  
+  const { sendMessage,subscribe } = useSocket();
+  const [ contactData, setContactData ] = useState(null);
 
   useEffect(()=>{
     getPendingFriend()
   },[])
   //获取好友请求
   const getPendingFriend = ()=>{
-  //  let { id } = localStorage.getItem('userData')?JSON.parse(localStorage.getItem('userData')):null;
-  //  console.log(id,"userData")
-    // api.get('friends_pending',{ "userId": id}).then((data)=>{
-    //   console.log(data,'1111')
-    //   if(data.code === 401)navigate("/login")
-    // }).catch((err)=>{})
+    let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+    console.log('11111')
+    sendMessage("init", {userId: data.id});
+    subscribe("init", (data) => { 
+      if(data.code === 200){
+        setFriendsPending(data.data.friendPending);
+        setFriendAccepted(data.data.friendAccepted);
+      }else{
+        message.error(data.message);
+      }
+    });
   }
   const onChange = ()=>{
 
+  }
+  const itemOnClick = (data)=>{
+    console.log(data,'datadatadatadatadata')
+    setContactData(data)
   }
   const items: CollapseProps['items'] = [
     {
@@ -108,14 +118,14 @@ const ContactsPage: React.FC<ContactsPageProps> = ({itemOnClick}) => {
       label: '新朋友',
       children: <List
       itemLayout="horizontal"
-      dataSource={data}
+      dataSource={friendsPending}
       renderItem={(item, index) => (
         <List.Item className="contact-item">
           <List.Item.Meta
-            avatar={<Avatar src={item.avatar} />}
-            title={<span>{item.name}</span>}
-            description={item.description}
-            onClick={()=>{itemOnClick(item)}}
+            avatar={<Avatar src={item.head_img} />}
+            title={<span>{item.username}</span>}
+            description={item?.notes[0]?.leaveMessage}
+            onClick={()=>{itemOnClick({data: item,type: 'pending'})}}
           />
         </List.Item>
       )}
@@ -126,14 +136,14 @@ const ContactsPage: React.FC<ContactsPageProps> = ({itemOnClick}) => {
       label: '联系人',
       children: <List
         itemLayout="horizontal"
-        dataSource={contactsData}
+        dataSource={friendAccepted}
         renderItem={(item) => (
           <List.Item className="contact-item">
             <List.Item.Meta
-              avatar={<Avatar src={item.avatar} />}
-              title={<span>{item.name}</span>}
-              description={item.description}
-              onClick={()=>{itemOnClick(item)}}
+              avatar={<Avatar src={item.head_img} />}
+              title={<span>{item.username}</span>}
+              // description={item.description}
+              onClick={()=>{itemOnClick({data: item,type: 'accepted'})}}
             />
           </List.Item>
         )}
@@ -160,20 +170,23 @@ const ContactsPage: React.FC<ContactsPageProps> = ({itemOnClick}) => {
   ];
 
   return (
-    <Layout className="contacts-layout ContactsPage">
-      <Header className="contacts-header">
-        <Search
-          placeholder="搜索"
-          allowClear
-          prefix={<SearchOutlined />}
-          style={{ width: '100%' }}
-        />
-        <Button type="default" color={"#bbb"} style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UserAddOutlined />}></Button>
-      </Header>
-      <Content className="contacts-content">
-        <Collapse items={items} defaultActiveKey={['1']} onChange={onChange} />
-      </Content>
-    </Layout>
+    <div className='slef-container'>
+      <div className="ContactsPage">
+        <Header className="contacts-header">
+          <Search
+            placeholder="搜索"
+            allowClear
+            prefix={<SearchOutlined />}
+            style={{ width: '100%' }}
+          />
+          <Button type="default" color={"#bbb"} style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UserAddOutlined />}></Button>
+        </Header>
+        <Content className="contacts-content">
+          <Collapse items={items} defaultActiveKey={['1']} onChange={onChange} />
+        </Content>
+      </div>
+      <ContactDetailPage contactData={contactData} />
+    </div>
   );
 };
 

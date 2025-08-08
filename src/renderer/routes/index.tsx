@@ -1,7 +1,9 @@
 import Home from '../pages/Home';
 import Login from '../pages/login';
-import Contact from '../pages/Contact';
-import About from '../pages/Contact';
+import ChatList from '../components/ChatList';
+import ContactsPage from '../components/ContactsPage';
+import Seting from '../components/Seting';
+// import { Children } from 'react';
 // import UserProfile from '../pages/UserProfile';
 // import Dashboard from '../pages/Dashboard';
 // import DashboardHome from '../pages/DashboardHome';
@@ -12,20 +14,25 @@ const routes = [
   {
     path: '/',
     element: <Home />,
-    auth: true
+    auth: true,
+    children: [
+      { path: '/', element: <ChatList /> }, // 聊天列表 
+      { path: '/contacts_page', element: <ContactsPage /> }, // 联系人页面
+      { path: 'seting', element: <Seting /> }, // 设置页面
+    ]
   },
   {
     path: '/login',
     element: <Login />,
-  },
-  {
-    path: '/contact',
-    element: <Contact />,
-  },
-  {
-    path: '/about',
-    element: <About />,
   }
+  // {
+  //   path: '/chat_list',
+  //   element: <ChatList />,
+  // },
+  // {
+  //   path: '/contacts_page',
+  //   element: <ContactsPage />,
+  // }
   // {
   //   path: '/user/:id',
   //   element: <UserProfile />,

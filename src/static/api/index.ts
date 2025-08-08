@@ -36,7 +36,9 @@ const apiList = {
     info_self: 'user/info_self',
     friends_add: 'friends/add',
     friends_test: 'friends/test',
-    friends_pending: 'friends/:userId/pending'
+    friends_pending: 'friends/:userId/pending',
+    friends_accept: 'friends/accept',
+    friends_reject: 'friends/reject',
 }
 
 // export const apiUrl = (x:apiType) => {
@@ -95,7 +97,7 @@ http.interceptors.response.use((response) => {
 });
 
 const load_axios = (url:string, method:string, params:any) => {
-    var pm = new Promise((resolve, reject) => {
+    let pm = new Promise((resolve, reject) => {
         if (method == 'GET' || method == 'get') {
             http.get(url, {
                 params: params
@@ -120,11 +122,11 @@ const load_axios = (url:string, method:string, params:any) => {
  **/
 export const api = {
     get: (key:apiType, params:any) => {
-        var url:string = apiUrl(key,params);
+        let url:string = apiUrl(key,params);
         return load_axios(url, "GET", params);
     },
     post: (key:apiType, params:any) => {
-        var url:string = apiUrl(key);
+        let url:string = apiUrl(key);
         return load_axios(url, "POST", params);
     }
 }

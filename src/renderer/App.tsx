@@ -23,13 +23,16 @@ const RouteListener = () => {
 function AppContent() {
   const navigate = useNavigate();
   const { initializeSocket, connectSocket } = useSocket();
+  const token = localStorage.getItem('token') || '';
+  const userData = localStorage.getItem('userData') || '';
 
   useEffect(() => {
     // 初始化 Socket
+    let userData = JSON.parse(localStorage.getItem("userData") || '{}');
     initializeSocket({
       url: 'http://localhost:3000',
       options: {
-        auth: { token: localStorage.getItem('token') || '' }
+        auth: { token,userId: userData.id }
       }
     });
     // 连接 Socket
@@ -37,12 +40,12 @@ function AppContent() {
       console.error('Failed to connect:', err);
     });
     // 清理逻辑可在 useSocket 内部处理
-  }, [initializeSocket, connectSocket]);
+  }, [initializeSocket, connectSocket, token]);
 
   useEffect(()=>{
     let token = localStorage.getItem("token");
     if(!token) navigate("/login")
-  },[])
+  },[token])
 
   useEffect(() => {
     if (!window.electronAPI) return;
