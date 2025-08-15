@@ -18,6 +18,7 @@
 }
 
 .chat-title {
+  line-height: 32px;
   margin-left: 10px;
   font-weight: 500;
 }

@@ -4,21 +4,24 @@ import { LeftOutlined, MoreOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
 import { api } from "../../../static/api";
+import { useSocket } from '../../store/useSocket';
 
 const ContactDetailPage: React.FC = ({contactData}) => {
   const navigate = useNavigate();
   const [infoItems,setInfoItems] = useState([]);
   const [contact,setContact] = useState(null);
   const [num,setNum] = useState(0);
+  const { sendMessage } = useSocket();
+
   useEffect(()=>{
     if(contactData){
       let { data, type } = contactData;
       setContact(data);
       setInfoItems([
-        { label: '地区', value: data.region || '隐藏' },
+        { label: '地区', value: data?.region || '隐藏' },
         { label: '备注名', value: Array.isArray(contact?.notes) && contact.notes.length > 0 ? contact.notes[0]?.remarks : '无' },
         { label: '标签', value: data?.tags?.join('，') || '无' },
-        { label: '性别', value: data.gender || '隐藏' },
+        { label: '性别', value: data?.gender || '隐藏' },
       ])
     }
   },[contactData])
@@ -59,16 +62,35 @@ const ContactDetailPage: React.FC = ({contactData}) => {
     ];
   }else{
     actionItems = [
-      { label: '发送消息', action: () => sendMessage(),type: 'cyan' },
+      { label: '发送消息', action: () => sendMessageFn(),type: 'cyan' },
     ];
   }
-  const sendMessage = () => {
+  const sendMessageFn = () => {
+    let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+    sendMessage('createChatSession', {});
+
     // 发送消息逻辑
     console.log('发送消息');
     // 可以在这里调用 API 或更新状态
-    navigate('/chat', { state: { contact } });
+    // navigate('/chat', { state: { contact } });
+    return
+    let params = {
+      user_id: data.id,
+      related_id: contact.id,
+      conversation_type: 'private',
+      title: contact.username,
+      avatar: contact.head_img,
+      lastMessage: '',
+      created_at: Date.now(),
+      unread_count: 0,
+    };
+    window.electronChat.db.addConversation(params);
+    // getGroup(1);
+    // return;
+    navigate('/', { state: { conversation: params } });
+    console.log(window.electronChat.db,params,data,'window.electronChat.db.addConversation')
   };
-
+  
 
   return (
     <div className="contact-detail-container ContactDetailPage">

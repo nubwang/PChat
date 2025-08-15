@@ -1,14 +1,16 @@
 import React, {useState} from 'react';
-import { Layout, Menu, type MenuProps, Button } from 'antd';
+import { Layout, Menu, type MenuProps } from 'antd';
 import {
   WechatOutlined,
   ContactsOutlined,
-  CompassOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 import { useNavigate, Outlet } from 'react-router-dom';
-import ChatList from '../ChatList';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeTab } from '../../store/routerSlice'; // 路径根据实际情况调整
+import type { RootState } from '../../store';
 
+import ChatList from '../ChatList';
 import ContactsPage from '../ContactsPage';
 import ContactDetailPage from '../ContactDetailPage';
 //引入退出登录组件
@@ -37,12 +39,14 @@ const items: MenuItem[] = [
 
 const WeChatLayout: React.FC = () => {
   const [selectedKey, setSelectedKey] = useState<string>('1');
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+  const tab = useSelector((state: RootState) => state.router.tab);
+  console.log(tab,'tabtabtab')
   //菜单选择
   const handleMenuSelect: MenuProps['onSelect'] = ({ key }) => {
     setSelectedKey(key as string);
-    console.log(key, 'keykeykeykeykey');
+    dispatch(changeTab(key)); // 赋值tab
     if(key === '1'){
       navigate('/');
     }
@@ -58,7 +62,7 @@ const WeChatLayout: React.FC = () => {
       <Sider width={80} className="sidebar">
         <Menu
           mode="vertical"
-          defaultSelectedKeys={['1']}
+          defaultSelectedKeys={tab ? [tab] : ['1']}
           onSelect={(i)=>{handleMenuSelect(i)}}
           className="sidebar-menu"
           items={items}

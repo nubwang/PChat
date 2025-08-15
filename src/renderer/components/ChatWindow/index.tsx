@@ -10,21 +10,20 @@ import './style.css';
 
 const { TextArea } = Input;
 
-const ChatWindow: React.FC = () => {
+const ChatWindow: React.FC = ({chatData}) => {
   const [inputValue, setInputValue] = useState('');
-
+  console.log(chatData, 'chatData');
   return (
     <div className="chat-window">
       <div className="chat-header">
         <div className="chat-header-info">
-          <Avatar src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s" />
-          <span className="chat-title">张三</span>
+          <span className="chat-title">{chatData?.title}</span>
         </div>
       </div>
       <div className="message-container">
         {/* 这里放置消息列表 */}
         <div className="message-item received">
-          <Avatar src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s" />
+          <Avatar src={require('../../../static/img/3.jpeg')} />
           <div className="message-content">
             <div className="message-text">你好，最近怎么样？</div>
             <div className="message-time">10:30</div>
@@ -35,7 +34,7 @@ const ChatWindow: React.FC = () => {
             <div className="message-text">我很好，谢谢！</div>
             <div className="message-time">10:32</div>
           </div>
-          <Avatar src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s" />
+          <Avatar src={require('../../../static/img/5.jpg')} />
         </div>
       </div>
       <div className="input-area">

@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState,useEffect, use } from 'react';
 import { Input, List, Avatar, Button, Modal,Search, Divider, Typography, Empty, message } from 'antd';
 import { SearchOutlined,UserAddOutlined,UserOutlined } from '@ant-design/icons';
 import './style.css';
@@ -9,30 +9,32 @@ import { useSocket } from '../../store/useSocket';
 
 const { Search,TextArea } = Input;
 
-const chatData = [
-  {
-    title: '张三',
-    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
-    lastMessage: '你好，最近怎么样？',
-    time: '10:30',
-    unread: 2,
-  },
-  {
-    title: '李四',
-    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
-    lastMessage: '项目进展如何？',
-    time: '昨天',
-    unread: 0,
-  },
-  {
-    title: '王二麻子',
-    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
-    lastMessage: '啦啦啦',
-    time: '前天',
-    unread: 10,
-  },
-  // 更多聊天...
-];
+// const chatData = [
+//   {
+//     list_id: 1,
+//     related_id: 1,
+//     title: '张三',
+//     avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
+//     lastMessage: '你好，最近怎么样？',
+//     time: '10:30',
+//     unread: 2,
+//   },
+//   {
+//     title: '李四',
+//     avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
+//     lastMessage: '项目进展如何？',
+//     time: '昨天',
+//     unread: 0,
+//   },
+//   {
+//     title: '王二麻子',
+//     avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
+//     lastMessage: '啦啦啦',
+//     time: '前天',
+//     unread: 10,
+//   },
+//   // 更多聊天...
+// ];
 
 
 const ChatList: React.FC = () => {
@@ -49,6 +51,43 @@ const ChatList: React.FC = () => {
   const [remarks,setRemarks] = useState("");
   const navigate = useNavigate();
   const { sendMessage,subscribe } = useSocket();
+  const [chatData, setChatData] = useState([]);
+  const [chatWindowData, setChatWindowData] = useState(null);
+
+  useEffect(() => {
+    // 获取用户信息
+    let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+    console.log(data,'111111')
+    let user_id = data.id;
+    if(!user_id) return;
+    // 获取会话列表
+    window.electronChat.db.getConversationById(user_id).then((data) => {
+      console.log(data, 'getConversationsByUserId');
+      // 处理获取到的会话数据
+      setChatData(data);
+      setChatWindowData(data[0] || null); // 默认选中第一个会话
+    }).catch((error) => {
+      console.error('Error fetching conversations:', error);
+    });
+    // 订阅私聊消息
+    subscribe("privateMessage", (data) => {
+      console.log(data, 'privateMessage');
+      if (data.code === 200) {
+        // 处理私聊消息
+      } else {
+        messageApi.error(data.message);
+      }
+    });
+    // 订阅群聊消息
+    subscribe("groupMessage", (data) => {
+      console.log(data, 'groupMessage');
+      if (data.code === 200) {
+        // 处理群聊消息
+      } else {
+        messageApi.error(data.message);
+      }
+    });
+  }, []); 
 
   useEffect(()=>{
     let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
@@ -77,7 +116,7 @@ const ChatList: React.FC = () => {
     }
     sendMessage("addFriend", params);
     //privateMessage
-    subscribe("privateMessage", (data) => { 
+    subscribe("notice", (data) => { 
       console.log(data,'addFriend');
       if(data.code === 200){
         messageApi.info(data.message);
@@ -121,7 +160,9 @@ const ChatList: React.FC = () => {
   const actionItems = [
     { label: '发消息', action: () => message.info('开始聊天') },
   ];
-  const listFn = ()=>{
+  const listFn = (item)=>{
+    console.log(item,'item')
+    setChatWindowData(item)
   }
   const leaveMessageFn = (e)=>{
     console.log('11111',e.target.value)
@@ -196,7 +237,9 @@ const ChatList: React.FC = () => {
                 avatar={<Avatar src={item.avatar} />}
                 title={<span>{item.title}</span>}
                 description={item.lastMessage}
-                onClick={listFn}
+                onClick={() => {
+                  listFn(item);
+                }}
               />
               <div className="chat-item-right">
                 <span className="time">{item.time}</span>
@@ -208,7 +251,7 @@ const ChatList: React.FC = () => {
           )}
         />
       </div>
-      <ChatWindow />
+      <ChatWindow chatData={chatWindowData} />
 
     </div>
   );
