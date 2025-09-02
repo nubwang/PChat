@@ -46,6 +46,20 @@ const ContactsPage: React.FC = () => {
   useEffect(() => {
     const handleInit = (data) => {
       if (data.code === 200) {
+        console.log(data.data,window.electronChat.db,'data.data.friendAccepted')
+        if(data.data.friendPending && data.data.friendPending.length > 0){
+          data.data.friendPending.forEach((item,index)=>{
+            window.electronChat.db.saveFriend(item.id, item.head_img,item.username, "pending");
+          });
+        }
+        if(data.data.friendAccepted && data.data.friendAccepted.length > 0){
+          data.data.friendAccepted.forEach((item,index)=>{
+            window.electronChat.db.saveFriend(item.id, item.head_img,item.username, "accepted");
+          });
+        }
+        window.electronChat.db.getFriendByUserId(6).then((data) => {
+          console.log(data, '获取好友列表');
+        });
         setFriendsPending(data.data.friendPending);
         setFriendAccepted(data.data.friendAccepted);
       } else {
@@ -53,8 +67,8 @@ const ContactsPage: React.FC = () => {
       }
     };
 
-    subscribe("init", handleInit);
     getPendingFriend();
+    subscribe("init", handleInit);
 
     return () => {
       unsubscribe("init");

@@ -5,13 +5,16 @@ import { useNavigate } from 'react-router-dom';
 import './style.css';
 import { api } from "../../../static/api";
 import { useSocket } from '../../store/useSocket';
+import { useDispatch } from 'react-redux';
+import { changeTab } from '../../store/routerSlice';
 
 const ContactDetailPage: React.FC = ({contactData}) => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [infoItems,setInfoItems] = useState([]);
   const [contact,setContact] = useState(null);
   const [num,setNum] = useState(0);
-  const { sendMessage } = useSocket();
+  const { sendMessage, subscribe } = useSocket();
 
   useEffect(()=>{
     if(contactData){
@@ -26,7 +29,7 @@ const ContactDetailPage: React.FC = ({contactData}) => {
     }
   },[contactData])
 
-  
+
   //下面写一个按钮接受的方法
   const handleAccept = () => {
     // 处理接受逻辑
@@ -66,31 +69,27 @@ const ContactDetailPage: React.FC = ({contactData}) => {
     ];
   }
   const sendMessageFn = () => {
-    let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
-    sendMessage('createChatSession', {});
-
+    let userData = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+    console.log(userData.id,contact.id,'sendMessageFn');
+    sendMessage('createChatSession', {userId: userData.id, peerType: 'user', peerId: contact.id});
+    subscribe("chatSessionCreated", (data) => {
+      if(data.code === 200){
+        console.log(data.conversationId.conversation_id,'chatSessionCreated');
+        window.electronChat.db.addConversation(data.conversationId.conversation_id, userData.id, 'user', contact.id,userData.id).then((Conversation) => {
+          console.log(Conversation,'addConversation');
+          dispatch(changeTab("1"));
+          navigate('/', { state: { Conversation } });
+        }).catch((error) => {
+          console.error('Error adding conversation:', error);
+        });
+      }else{
+        messageApi.error(data.message);
+      }
+    });
     // 发送消息逻辑
-    console.log('发送消息');
-    // 可以在这里调用 API 或更新状态
-    // navigate('/chat', { state: { contact } });
-    return
-    let params = {
-      user_id: data.id,
-      related_id: contact.id,
-      conversation_type: 'private',
-      title: contact.username,
-      avatar: contact.head_img,
-      lastMessage: '',
-      created_at: Date.now(),
-      unread_count: 0,
-    };
-    window.electronChat.db.addConversation(params);
-    // getGroup(1);
-    // return;
-    navigate('/', { state: { conversation: params } });
-    console.log(window.electronChat.db,params,data,'window.electronChat.db.addConversation')
+    console.log('发送消息',contact);
   };
-  
+
 
   return (
     <div className="contact-detail-container ContactDetailPage">

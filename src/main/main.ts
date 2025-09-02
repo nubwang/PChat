@@ -37,7 +37,7 @@ ipcMain.on('ipc-example', async (event, arg) => {
 });
 ipcMain.on('NAVIGATE_TO', (_, { path, action }) => {
   if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send('REACT_NAVIGATE', { 
+    mainWindow.webContents.send('REACT_NAVIGATE', {
       path,
       action: action || 'push' // 确保默认值
     });
@@ -131,6 +131,16 @@ const createWindow = async () => {
 /**
  * Add event listeners...
  */
+// 好友表 getFriendByUserId
+ipcMain.handle('db:add-friend', (event, id, head_img,username, status) => {
+  return db.saveFriend(id, head_img,username, status);
+});
+ipcMain.handle('db:get-friends-by-status', (event, status) => {
+  return db.getStatusFriends(status);
+});
+ipcMain.handle('db:get-friends-by-user', (event, userId) => {
+  return db.getFriendByUserId(userId);
+});
 // 用户表相关
 ipcMain.handle('db:add-user', (event, id, username, nickname, email, password, avatar, head_img, status) => {
   return db.addUser(id, username, nickname, email, password, avatar, head_img, status);
@@ -138,73 +148,21 @@ ipcMain.handle('db:add-user', (event, id, username, nickname, email, password, a
 ipcMain.handle('db:get-user-by-id', (event, id) => {
   return db.getUserById(id);
 });
-ipcMain.handle('db:get-user-by-username', (event, username) => {
-  return db.getUserByUsername(username);
-});
-ipcMain.handle('db:update-user', (event, id, fields) => {
-  return db.updateUser(id, fields);
-});
-ipcMain.handle('db:delete-user', (event, id) => {
-  return db.deleteUser(id);
+//getConversationAll addConversation(conversation_id,user_id, peer_type, peer_id)
+ipcMain.handle('db:get-conversation-all', (event) => {
+  return db.getConversationAll();
 });
 
-// 会话表相关
-ipcMain.handle('db:add-conversation', (event, id, name, type, avatar, creator_id) => {
-  return db.addConversation(id, name, type, avatar, creator_id);
-});
-ipcMain.handle('db:get-conversation-by-id', (event, id) => {
-  return db.getConversationById(id);
-});
-ipcMain.handle('db:update-conversation', (event, id, fields) => {
-  return db.updateConversation(id, fields);
-});
-ipcMain.handle('db:delete-conversation', (event, id) => {
-  return db.deleteConversation(id);
+ipcMain.handle('db:add-conversation', (event, conversation_id,user_id, peer_type, peer_id, localstrongID) => {
+  return db.addConversation(conversation_id,user_id, peer_type, peer_id, localstrongID);
 });
 
-// 会话成员表相关
-ipcMain.handle('db:add-conversation-member', (event, id, conversation_id, user_id, role, nickname) => {
-  return db.addConversationMember(id, conversation_id, user_id, role, nickname);
-});
-ipcMain.handle('db:get-conversation-members', (event, conversation_id) => {
-  return db.getConversationMembers(conversation_id);
-});
-ipcMain.handle('db:update-conversation-member', (event, id, fields) => {
-  return db.updateConversationMember(id, fields);
-});
-ipcMain.handle('db:delete-conversation-member', (event, id) => {
-  return db.deleteConversationMember(id);
+ipcMain.handle('db:add-message', (event, msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size) => {
+  return db.addMessage(msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size);
 });
 
-// 消息表相关
-ipcMain.handle('db:add-message', (event, id, conversation_id, sender_id, content, message_type, is_revoked) => {
-  return db.addMessage(id, conversation_id, sender_id, content, message_type, is_revoked);
-});
-ipcMain.handle('db:get-message-by-id', (event, id) => {
-  return db.getMessageById(id);
-});
-ipcMain.handle('db:get-messages-by-conversation', (event, conversation_id, limit = 50) => {
-  return db.getMessagesByConversation(conversation_id, limit);
-});
-ipcMain.handle('db:update-message', (event, id, fields) => {
-  return db.updateMessage(id, fields);
-});
-ipcMain.handle('db:delete-message', (event, id) => {
-  return db.deleteMessage(id);
-});
-
-// 会话设置表相关
-ipcMain.handle('db:add-conversation-setting', (event, id, conversation_id, user_id, is_muted, custom_name, stick_on_top) => {
-  return db.addConversationSetting(id, conversation_id, user_id, is_muted, custom_name, stick_on_top);
-});
-ipcMain.handle('db:get-conversation-setting', (event, conversation_id, user_id) => {
-  return db.getConversationSetting(conversation_id, user_id);
-});
-ipcMain.handle('db:update-conversation-setting', (event, id, fields) => {
-  return db.updateConversationSetting(id, fields);
-});
-ipcMain.handle('db:delete-conversation-setting', (event, id) => {
-  return db.deleteConversationSetting(id);
+ipcMain.handle('db:get-messages-by-conversation', (event, conversation_id, limit, offset) => {
+  return db.getMessagesByConversation(conversation_id, limit, offset);
 });
 
 app.on('window-all-closed', () => {
