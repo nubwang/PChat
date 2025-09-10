@@ -10,7 +10,7 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-   const { currentPath, previousPath } = useSelector(
+  const { currentPath, previousPath } = useSelector(
     (state: RootState) => state.router
   );
 
@@ -37,7 +37,7 @@ const LoginPage: React.FC = () => {
     api.get("info_self").then((data)=>{
       console.log(data,'info_self')
       if(data.code === 200){
-        
+
       }
     }).catch((err)=>{
     })

@@ -6,35 +6,11 @@ import ChatWindow from '../ChatWindow';
 import { api } from "../../../static/api";
 import { useNavigate,useLocation } from 'react-router-dom';
 import { useSocket } from '../../store/useSocket';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { formatChatTime } from '../../../utils/timeConversion';
 
 const { Search,TextArea } = Input;
-
-// const chatData = [
-//   {
-//     list_id: 1,
-//     related_id: 1,
-//     title: '张三',
-//     avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
-//     lastMessage: '你好，最近怎么样？',
-//     time: '10:30',
-//     unread: 2,
-//   },
-//   {
-//     title: '李四',
-//     avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
-//     lastMessage: '项目进展如何？',
-//     time: '昨天',
-//     unread: 0,
-//   },
-//   {
-//     title: '王二麻子',
-//     avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgGoeqF3KfRAIo7d2MfKv2v0i7-NQGC1Olfg&s',
-//     lastMessage: '啦啦啦',
-//     time: '前天',
-//     unread: 10,
-//   },
-//   // 更多聊天...
-// ];
 
 
 const ChatList: React.FC = () => {
@@ -50,121 +26,56 @@ const ChatList: React.FC = () => {
   const [leaveMessage,setLeaveMessage] = useState("");
   const [remarks,setRemarks] = useState("");
   const navigate = useNavigate();
-  const { sendMessage,subscribe } = useSocket();
+  const { sendMessage,subscribe,connectSocket,sendWithReconnect } = useSocket();
   const [chatData, setChatData] = useState([]);
   const [chatWindowData, setChatWindowData] = useState(null);
   const [selectedKey, setSelectedKey] = useState(null);
   const { Conversation } = location.state || {};
+  const { isConnected } = useSelector( (state: RootState) => state.socket );
+
+  // 修改后的 useEffect 逻辑
+useEffect(() => {
+  console.log(isConnected,'isConnected')
+    init();
+}, [isConnected,sendMessage]); // 仅依赖 Conversation
+
+const init = useCallback(() => {
+  let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : null;
+  if (!data?.id) return;
+  console.log(data, 'userData');
+  sendMessage("getConversationList", { userId: data.id });
+}, [isConnected, sendMessage]);
 
   useEffect(() => {
-    // 获取用户信息
-    const userDataStr = localStorage.getItem("userData");
-    const userData = userDataStr ? JSON.parse(userDataStr) : null;
-    console.log(userData, '111111');
-
-    if (!userData?.id) {
-      console.error('未找到用户ID');
-      return;
-    }
-
-    const user_id = userData.id;
-
-    // 封装异步操作的函数
-    const fetchData = async () => {
-      try {
-        // 获取会话列表
-        const data = await window.electronChat.db.getConversationAll();
-        console.log(data, Conversation, 'getConversationsByUserId');
-
-        // 调用newList并等待结果
-        const ConversationList = await newList(data, user_id);
-
-        // 处理获取到的会话数据
-        console.log(Conversation,'1111');
-        setChatData(ConversationList);
-
-        // 如果有传入Conversation，优先选中它
+    const subscriptions = subscribe("ConversationList", (res) => {
+      console.log(res,'ConversationList')
+    if (res.code === 200) {
+      const data = res.data;
+      if (Array.isArray(data)) { // 确保数据有效性
+        setChatData(data);
         if (Conversation) {
-          ConversationList.forEach((item) => {
-            console.log(item.conversation_id === Conversation.conversation_id,'Conversation');
-            if (item.conversation_id === Conversation.conversation_id) {
-              setSelectedKey(item.conversation_id);
-              setChatWindowData(item);
-            }
-          });
-        } else {
-          // setSelectedKey(ConversationList[0]?.conversation_id || null);
-          // setChatWindowData(ConversationList[0] || null);
+          const target = data.find(item =>
+            item.conversation_id === Conversation.conversation_id
+          );
+          if (target) {
+            setSelectedKey(target.conversation_id);
+            setChatWindowData(target);
+          }
         }
-      } catch (error) {
-        console.error('Error fetching data:', error);
       }
-    };
-
-    // 执行异步操作
-    fetchData();
-
-    // 订阅私聊消息
-    const privateSub = subscribe("privateMessage", (data) => {
-      console.log(data, 'privateMessage');
-      if (data.code === 200) {
-        // 处理私聊消息
-      } else {
-        messageApi.error(data.message);
-      }
-    });
-
-    // 订阅群聊消息
-    const groupSub = subscribe("groupMessage", (data) => {
-      console.log(data, 'groupMessage');
-      if (data.code === 200) {
-        // 处理群聊消息
-      } else {
-        messageApi.error(data.message);
-      }
-    });
-
-    // 清理订阅
-    return () => {
-      privateSub?.unsubscribe();
-      groupSub?.unsubscribe();
-    };
-  }, [Conversation]);
-
-  const newList = async (data, user_id) => {
-    return Promise.all(data.map(async (item) => {
-      try {
-        const friendData = await window.electronChat.db.getFriendByUserId(
-          user_id === item.user_id ? item.peer_id : item.user_id
-        );
-
-        return {
-          ...item,
-          name: friendData?.nickname || friendData?.username || '未知用户',
-          avatar: friendData?.head_img || require('../../../static/img/5.jpg'),
-          lastMessage: item.last_message || '暂无消息',
-          time: item.updated_at ?
-            new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
-          unread: item.unread_count || 0
-        };
-      } catch (error) {
-        console.error('获取好友信息失败:', error);
-        return {
-          ...item,
-          name: '未知用户',
-          avatar: require('../../../static/img/5.jpg'),
-          lastMessage: '消息加载失败',
-          time: '',
-          unread: 0
-        };
-      }
-    }));
+    } else {
+      messageApi.error(res.message); // 修正为 res.message
+    }
+  });
+  return () => {
+    subscriptions?.unsubscribe()
   };
+  }, [isConnected]);
 
   useEffect(()=>{
     let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
     setSlefInfo(data);
-  },[])
+  },[isConnected])
   const showModal = () => {
     // friends_test: 'friends/test'
     // navigate("/contact")
@@ -245,6 +156,25 @@ const ChatList: React.FC = () => {
     setRemarks(e.target.value)
   }
 
+  const timeFn = (time)=>{
+    const date = new Date(time);
+
+    // 直接使用 Asia/Shanghai 时区格式化
+    const formatter = new Intl.DateTimeFormat("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+    const beijingTime = formatter.format(date);
+    return beijingTime;
+  }
+
   return (
     <div className="slef-container">
       <div className="chat-list-container">
@@ -312,16 +242,16 @@ const ChatList: React.FC = () => {
             }}>
               <List.Item.Meta
                 avatar={<Avatar src={item.avatar} />}
-                title={<span>{item.name}</span>}
-                description={item.lastMessage}
+                title={<span>{item.username}</span>}
+                description={item.last_msg_content?item.last_msg_content:"暂无消息"}
                 onClick={() => {
                   listFn(item);
                 }}
               />
               <div className="chat-item-right">
-                <span className="time">{item.time}</span>
-                {item.unread > 0 && (
-                  <span className="unread-badge">{item.unread}</span>
+                <span className="time">{formatChatTime(item.last_msg_time)}</span>
+                {item.unread_count > 0 && (
+                  <span className="unread-badge">{item.unread_count}</span>
                 )}
               </div>
             </List.Item>

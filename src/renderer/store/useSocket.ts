@@ -75,6 +75,18 @@ export const useSocket = () => {
     socketService.cleanupListeners();
   }, []);
 
+  const sendWithReconnect = useCallback(async (event: string, data: any) => {
+    // 如果未连接，先尝试重连
+    if (!socketState.isConnected) {
+      await dispatch(reconnectSocketAction());
+    }
+    // 等待连接完成后再发送
+    if (socketState.isConnected) {
+      return dispatch(sendMessageAction({ event, data }));
+    }
+    return Promise.reject(new Error('Socket连接失败'));
+  }, [dispatch, socketState.isConnected]);
+
   useEffect(() => {
     return () => {
       cleanupListeners();
@@ -93,5 +105,6 @@ export const useSocket = () => {
     subscribe,
     unsubscribe,
     cleanupListeners,
+    sendWithReconnect
   };
 };

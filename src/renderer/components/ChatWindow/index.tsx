@@ -32,8 +32,8 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [page, setPage] = useState(0);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -44,44 +44,74 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
   // 加载历史消息（优化版）
   const loadHistoryMessages = useCallback(async () => {
-    if (!hasMore || isLoadingHistory || !chatData) return;
-
+    // if (!hasMore || isLoadingHistory || !chatData) return;
+    console.log('loadHistoryMessages');
     setIsLoadingHistory(true);
     try {
-      // 模拟API调用
-      const mockData = Array(20).fill(0).map((_, i) => ({
-        id: `${Date.now()}-${i}`,
-        content: `历史消息 ${messages.length + i + 1}`,
-        create_time: new Date().toLocaleTimeString(),
-        sender_id: chatData.peer_id,
-      }));
-
+      // 模拟API调用 getConversationMessages
+      // const mockData = Array(100).fill(0).map((_, i) => ({
+      //   id: `${Date.now()}-${i}`,
+      //   content: `历史消息 ${messages.length + i + 1}`,
+      //   create_time: new Date().toLocaleTimeString(),
+      //   sender_id: chatData.peer_id,
+      // }));
+      console.log(chatData, 'chatData.conversation_id, page');
+      let params = {
+        conversationId: chatData.conversation_id,
+        pageSize: 100,
+        page: 0,
+      };
+      sendMessage('getConversationMessages', params);
+      // setPage(p => p + 1);
       // 保持滚动位置
-      const container = messageContainerRef.current;
-      const prevScrollHeight = container?.scrollHeight || 0;
+      // const container = messageContainerRef.current;
+      // const prevScrollHeight = container?.scrollHeight || 0;
 
-      setMessages(prev => [...mockData, ...prev]);
-      setPage(p => p + 1);
-      setHasMore(messages.length + mockData.length < 100); // 示例条件
+      // setMessages(prev => [...mockData, ...prev]);
+      // setPage(p => p + 1);
+      // console.log(messages.length , mockData.length,'hasMore');
+      // setHasMore(messages.length + mockData.length < 100); // 示例条件
 
       // 优化滚动恢复
-      requestAnimationFrame(() => {
-        if (container) {
-          container.scrollTop = container.scrollHeight - prevScrollHeight;
-        }
-      });
-    } finally {
-      setIsLoadingHistory(false);
+      // requestAnimationFrame(() => {
+      //   if (container) {
+      //     container.scrollTop = container.scrollHeight - prevScrollHeight;
+      //   }
+      // });
+    } catch (error) {
+      message.error('加载历史消息失败');
     }
-  }, [hasMore, isLoadingHistory, messages.length, chatData]);
+  }, [chatData,isLoadingHistory]);
+
+  useEffect(() => {
+    const handleNewMessage = (data: any) => {
+      if (data.code === 200) {
+        let newData = data.messages;
+        console.log(data.messages, 'conversationMessages11111');
+        if(newData&&newData.length>0){
+          setPage(p => p + 1);
+          setMessages(prev => [...prev, ...newData]);
+        }
+        if(newData&&newData.length < 100){
+          setIsLoadingHistory(false);
+        }
+      } else {
+        message.error('获取消息失败');
+      }
+
+    };
+    let unsubscribe = subscribe('conversationMessages', handleNewMessage);
+    return () => unsubscribe?.();
+  }, [loadHistoryMessages,chatData]);
 
   // 滚动处理（优化版）
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
     const { scrollTop, scrollHeight, clientHeight } = container;
-    console.log(scrollTop, scrollHeight, clientHeight, 'scrollTop');
+    // console.log(scrollTop, scrollHeight, clientHeight,scrollTop == 0 , hasMore , !isLoadingHistory, 'scrollTop');
     // 滚动到顶部加载更多
-    if (scrollTop < 100 && hasMore && !isLoadingHistory) {
+    if (scrollTop == 0 && hasMore && !isLoadingHistory) {
+      console.log('加载更多历史消息');
       loadHistoryMessages();
     }
   }, [hasMore, isLoadingHistory, loadHistoryMessages]);
@@ -94,6 +124,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     loadHistoryMessages();
 
     const handleNewMessage = (data: any) => {
+      console.log(data, 'newMessage');
       if (data.code === 200) {
         let newData = data.data;
         console.log(newData.messageId,'newMessage');
@@ -116,7 +147,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
     let unsubscribe = subscribe('newMessage', handleNewMessage);
     return () => unsubscribe?.();
-  }, [chatData, loadHistoryMessages]);
+  }, [chatData]);
 
   // 发送消息（优化参数处理）
   const handleSendMessage = useCallback(() => {
@@ -137,7 +168,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages,chatData]);
 
   return (
     <div className="chat-window">
@@ -145,18 +176,18 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
         <>
           <div className="chat-header">
             <div className="chat-header-info">
-              <span className="chat-title">{chatData.name}</span>
+              <span className="chat-title">{chatData.username}</span>
             </div>
           </div>
 
           <div className="message-container" onScroll={handleScroll} ref={messageContainerRef}>
             <List
-              loading={isLoadingHistory}
-              // loadMore={
-              //   <div style={{ textAlign: 'center', padding: 10 }}>
-              //     {isLoadingHistory ? <Spin size="small" /> : hasMore ? '加载更多' : '没有更多了'}
-              //   </div>
-              // }
+              // loading={isLoadingHistory}
+              header={
+                <div style={{ textAlign: 'center', padding: 10 }}>
+                  {isLoadingHistory ? <Spin size="small" /> : '没有更多了'}
+                </div>
+              }
               dataSource={messages}
               split={false}
               renderItem={(item) => (
@@ -201,13 +232,13 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                   (e.target as HTMLTextAreaElement).focus();
                 }}
               />
-              <Button
+              {/* <Button
                 type="primary"
                 onClick={handleSendMessage}
                 loading={isLoadingHistory}
                 icon={<SendOutlined />}
                 style={{ marginTop: 8 }}
-              />
+              /> */}
             </div>
           </div>
         </>

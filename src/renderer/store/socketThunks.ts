@@ -28,16 +28,16 @@ export const connectSocket = createAsyncThunk(
     try {
       const state = getState() as RootState;
       if (state.socket.isConnected) return true;
-      
+
       dispatch(connectionStarted());
-      
+
       // 添加超时处理
       const timeout = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Connection timeout')), 10000);
       });
-      
+
       const connectPromise = socketService.connect();
-      
+
       await Promise.race([connectPromise, timeout]);
       return true;
     } catch (error) {
@@ -46,6 +46,7 @@ export const connectSocket = createAsyncThunk(
     }
   }
 );
+
 
 export const disconnectSocket = createAsyncThunk(
   'socket/disconnect',
@@ -104,17 +105,41 @@ export const sendSocketMessage = createAsyncThunk(
   }
 );
 
+// export const reconnectSocket = createAsyncThunk(
+//   'socket/reconnect',
+//   async (_, { dispatch, rejectWithValue }) => {
+//     try {
+//       dispatch(connectionStarted());
+//       socketService.disconnect();
+//       await socketService.connect();
+//       return true;
+//     } catch (error) {
+//       dispatch(errorOccurred(error instanceof Error ? error.message : 'Reconnection failed'));
+//       return rejectWithValue(error instanceof Error ? error.message : String(error));
+//     }
+//   }
+// );
+
 export const reconnectSocket = createAsyncThunk(
   'socket/reconnect',
-  async (_, { dispatch, rejectWithValue }) => {
+  async (_, { dispatch }) => {
     try {
-      dispatch(connectionStarted());
-      socketService.disconnect();
-      await socketService.connect();
-      return true;
+      // 尝试最多5次重连
+      for (let i = 0; i < 5; i++) {
+        try {
+          await socketService.connect();
+          return true;
+        } catch (error) {
+          // 指数退避等待
+          await new Promise(resolve =>
+            setTimeout(resolve, 1000 * Math.pow(2, i))
+          );
+        }
+      }
+      throw new Error('重连失败');
     } catch (error) {
-      dispatch(errorOccurred(error instanceof Error ? error.message : 'Reconnection failed'));
-      return rejectWithValue(error instanceof Error ? error.message : String(error));
+      dispatch(errorOccurred(error.message));
+      return Promise.reject(error);
     }
   }
 );

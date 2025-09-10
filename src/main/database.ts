@@ -11,7 +11,7 @@ class ChatDatabase {
   }
 
   init() {
-    // this.db.exec(`DROP TABLE IF EXISTS messages;`);
+    this.db.exec(`DROP TABLE IF EXISTS conversations;`);
     // const schema = this.db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='conversations'`).get();
     // 启用外键约束
     this.db.pragma("foreign_keys = ON");
