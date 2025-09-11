@@ -51,7 +51,6 @@
 
 .message-content {
   max-width: 60%;
-  margin: 0 10px;
 }
 
 .message-text {
@@ -113,6 +112,9 @@
   box-shadow: none;
   background-color: #fff;
 }
+:where(.css-dev-only-do-not-override-36gkoj).ant-list .ant-list-item {
+  display: block;
+}
 
 .chat-window .ant-btn {
   margin-left: 10px;
@@ -136,22 +138,22 @@
 .message-item {
   display: flex;
   margin-bottom: 16px;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .message-item.received {
-  flex-direction: row;
+  width: 100%;
 }
 
 .message-item.sent {
-  flex-direction: row-reverse;
+  width: 100%;
 }
 
 .message-content {
   max-width: 60%;
-  margin: 0 12px;
+  /* margin: 0 12px; */
   position: relative;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: 4px;
   background: #f5f5f5;
 }
