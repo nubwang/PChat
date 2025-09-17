@@ -112,9 +112,9 @@
   box-shadow: none;
   background-color: #fff;
 }
-:where(.css-dev-only-do-not-override-36gkoj).ant-list .ant-list-item {
+/* :where(.css-dev-only-do-not-override-36gkoj).ant-list .ant-list-item {
   display: block;
-}
+} */
 
 .chat-window .ant-btn {
   margin-left: 10px;

@@ -4,6 +4,7 @@
  * @returns {string} 格式化后的时间字符串
  */
 function formatChatTime(messageTime) {
+  // console.log(messageTime,'messageTime')
   // 统一转换为Date对象并处理时区
   const msgDate = new Date(messageTime);
   const now = new Date();

@@ -6,7 +6,8 @@ import './style.css';
 import { api } from "../../../static/api";
 import { useSocket } from '../../store/useSocket';
 import { useDispatch } from 'react-redux';
-import { changeTab } from '../../store/routerSlice';
+import { changeTab,changeContersionId } from '../../store/routerSlice';
+// import { changeContersionId } from '../../store/routerSlice';
 
 const ContactDetailPage: React.FC = ({contactData}) => {
   const dispatch = useDispatch();
@@ -74,14 +75,15 @@ const ContactDetailPage: React.FC = ({contactData}) => {
     sendMessage('createChatSession', {userId: userData.id, peerType: 'user', peerId: contact.id});
     subscribe("chatSessionCreated", (data) => {
       if(data.code === 200){
-        console.log(data.conversationId.conversation_id,'chatSessionCreated');
-        window.electronChat.db.addConversation(data.conversationId.conversation_id, userData.id, 'user', contact.id,userData.id).then((Conversation) => {
-          console.log(Conversation,'addConversation');
-          dispatch(changeTab("1"));
-          navigate('/', { state: { Conversation } });
-        }).catch((error) => {
-          console.error('Error adding conversation:', error);
-        });
+        console.log(data,'chatSessionCreated');
+        dispatch(changeTab("1"));
+        dispatch(changeContersionId(data.data.conversation_id));
+        navigate('/', { state: { Conversation: data.data } });
+        // window.electronChat.db.addConversation(data.conversationId.conversation_id, userData.id, 'user', contact.id,userData.id).then((Conversation) => {
+        //   console.log(Conversation,'addConversation');
+        // }).catch((error) => {
+        //   console.error('Error adding conversation:', error);
+        // });
       }else{
         messageApi.error(data.message);
       }

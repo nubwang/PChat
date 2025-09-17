@@ -11,7 +11,7 @@ class ChatDatabase {
   }
 
   init() {
-    this.db.exec(`DROP TABLE IF EXISTS conversations;`);
+    // this.db.exec(`DROP TABLE IF EXISTS messages;`);
     // const schema = this.db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='conversations'`).get();
     // 启用外键约束
     this.db.pragma("foreign_keys = ON");
@@ -98,7 +98,7 @@ class ChatDatabase {
         msg_id INTEGER PRIMARY KEY,
         conversation_id INTEGER NOT NULL,
         sender_id INTEGER NOT NULL,
-        receiver_type TEXT CHECK(receiver_type IN ('user', 'group')) NOT NULL,
+        receiver_type TEXT CHECK(receiver_type IN ('user', 'group')) NOT NULL DEFAULT 'user',
         receiver_id INTEGER NOT NULL,
         content_type TEXT CHECK(content_type IN (
           'text', 'image', 'video', 'voice',

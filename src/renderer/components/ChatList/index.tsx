@@ -9,11 +9,14 @@ import { useSocket } from '../../store/useSocket';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { formatChatTime } from '../../../utils/timeConversion';
+import { useDispatch } from 'react-redux';
+import { changeContersionId } from '../../store/routerSlice';
 
 const { Search,TextArea } = Input;
 
 
 const ChatList: React.FC = () => {
+  const dispatch = useDispatch();
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading,setLoading] = useState(false);
@@ -32,6 +35,7 @@ const ChatList: React.FC = () => {
   const [selectedKey, setSelectedKey] = useState(null);
   const { Conversation } = location.state || {};
   const { isConnected } = useSelector( (state: RootState) => state.socket );
+  const { contersionId } = useSelector( (state: RootState) => state.router );
 
   // 修改后的 useEffect 逻辑
 useEffect(() => {
@@ -53,9 +57,18 @@ const init = useCallback(() => {
       const data = res.data;
       if (Array.isArray(data)) { // 确保数据有效性
         setChatData(data);
-        if (Conversation) {
+        // if (Conversation) {
+        //   const target = data.find(item =>
+        //     item.conversation_id === Conversation.conversation_id
+        //   );
+        //   if (target) {
+        //     setSelectedKey(target.conversation_id);
+        //     setChatWindowData(target);
+        //   }
+        // }
+        if(contersionId){
           const target = data.find(item =>
-            item.conversation_id === Conversation.conversation_id
+            item.conversation_id === contersionId
           );
           if (target) {
             setSelectedKey(target.conversation_id);
@@ -70,7 +83,7 @@ const init = useCallback(() => {
   return () => {
     subscriptions?.unsubscribe()
   };
-  }, [isConnected]);
+  }, [isConnected,sendMessage,subscribe]);
 
   useEffect(()=>{
     let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
@@ -145,6 +158,7 @@ const init = useCallback(() => {
   ];
   const listFn = (item)=>{
     console.log(item,'item')
+    dispatch(changeContersionId(item.conversation_id));
     setSelectedKey(item.conversation_id);
     setChatWindowData(item);
   }
@@ -249,7 +263,7 @@ const init = useCallback(() => {
                 }}
               />
               <div className="chat-item-right">
-                <span className="time">{formatChatTime(item.last_msg_time)}</span>
+                <span className="time">{item.last_msg_time?formatChatTime(item.last_msg_time):null}</span>
                 {item.unread_count > 0 && (
                   <span className="unread-badge">{item.unread_count}</span>
                 )}
