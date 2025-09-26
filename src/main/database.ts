@@ -6,6 +6,7 @@ const { app } = require('electron');
 class ChatDatabase {
   constructor() {
     this.dbPath = path.join(app.getPath('userData'), 'chat.db');
+    console.log('Database path:', this.dbPath);
     this.db = new Database(this.dbPath);
     this.init();
   }

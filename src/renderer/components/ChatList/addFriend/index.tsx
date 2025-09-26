@@ -39,6 +39,7 @@ const AddFriend: React.FC = ({isModalOpen,handleCancel,isConnected}) => {
     setValue(e.target.value)
   }
   useEffect(()=>{
+    console.log(addData,'addData')
     let userData = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
     setSlefInfo(userData);
   },[isConnected])
@@ -111,7 +112,7 @@ const AddFriend: React.FC = ({isModalOpen,handleCancel,isConnected}) => {
         addData?
         <div className="profile-section">
           <Avatar src={addData?.head_img} size={60} />
-          <h3 className="contact-name">{addData?.nickname}</h3>
+          <h3 className="contact-name">{addData?.username}</h3>
           <p className="contact-description">{addData?.id}</p>
         </div>
         :

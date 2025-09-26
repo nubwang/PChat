@@ -61,6 +61,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
   // 消息订阅（优化内存管理）
   useEffect(() => {
+    console.log(chatData,'chatData')
     setMessages([]);
     setPage(0);
     setIsLoadingHistory(true);
@@ -226,24 +227,31 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                 }
                 dataSource={messages}
                 split={false}
-                renderItem={(item) => (
-                  <List.Item key={item.id}>
-                    <div className={`message-item ${
-                      item.sender_id === userData?.id ? 'sent' : 'received'
-                    }`}>
-                      {item.sender_id !== userData?.id && (
-                        <Avatar src={item.sender_avatar} />
-                      )}
-                      <div className="message-content">
-                        <div className="message-text">{item.content}</div>
-                        <div className="message-time">{item.create_time}</div>
-                      </div>
-                      {item.sender_id === userData?.id && (
-                        <Avatar src={item.sender_avatar ? item.sender_avatar : userData.avatar} />
-                      )}
-                    </div>
-                  </List.Item>
-                )}
+                renderItem={(item) => {
+                  let friend = chatData.user_id === userData.id ? chatData.peer_id : chatData.user_id;
+                  if(item.sender_id == friend || item.receiver_id == friend){
+                    return (
+                      <List.Item key={item.id}>
+                        <div className={`message-item ${
+                          item.sender_id === userData?.id ? 'sent' : 'received'
+                        }`}>
+                          {item.sender_id !== userData?.id && (
+                            <Avatar src={item.sender_avatar} />
+                          )}
+                          <div className="message-content">
+                            <div className="message-text">{item.content}</div>
+                            <div className="message-time">{item.create_time}</div>
+                          </div>
+                          {item.sender_id === userData?.id && (
+                            <Avatar src={item.sender_avatar} />
+                          )}
+                        </div>
+                      </List.Item>
+                    )
+                  }else{
+                    return null;
+                  }
+                }}
               />
               <div ref={messagesEndRef} />
             </div>

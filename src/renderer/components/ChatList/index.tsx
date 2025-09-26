@@ -39,7 +39,7 @@ const ChatList: React.FC = () => {
   const { Conversation } = location.state || {};
   const { isConnected } = useSelector( (state: RootState) => state.socket );
   const { contersionId } = useSelector( (state: RootState) => state.router );
-  const GroupRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<{ openModal: () => void; closeModal: () => void }>(null);
   // 修改后的 useEffect 逻辑
   useEffect(() => {
     console.log(isConnected,'isConnected')
@@ -133,8 +133,8 @@ const ChatList: React.FC = () => {
       key: '1',
       label: (
         <div onClick={()=>{
-          console.log(GroupRef,'GroupRef')
-          // GroupRef.current?.showModal()
+          console.log(groupRef, 'groupRef');
+          groupRef.current?.openModal();
         }}>
           <FileAddOutlined />
           <span style={{marginLeft: '8px'}}>发起群聊</span>
@@ -168,7 +168,7 @@ const ChatList: React.FC = () => {
           </Dropdown>
         </div>
         <AddFriend isModalOpen={isModalOpen} handleCancel={handleCancel} isConnected={isConnected} />
-        <AddGroup GroupRef={GroupRef}/>
+        <AddGroup ref={groupRef}/>
         <Divider style={{ margin: '10px 0' }} />
 
         <List
