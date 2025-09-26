@@ -1,25 +1,42 @@
+:root {
+  --border-color: #e6e6e6;
+  --bg-color: #f5f5f5;
+  --sent-bg: #95ec69;
+  --received-bg: #fff;
+  --text-color: #333;
+  --time-color: #999;
+  --hover-color: #7d7d7d;
+  --disabled-bg: #f0f0f0;
+  --disabled-border: #d9d9d9;
+  --disabled-text: rgba(0, 0, 0, 0.25);
+}
+
 .chat-window {
   flex-grow: 1;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
+
 .noChatData {
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  color: var(--time-color);
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .chat-header {
   padding: 10px 20px;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
-  align-items: center;
-}
-
-.chat-header-info {
-  display: flex;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -27,18 +44,28 @@
   line-height: 32px;
   margin-left: 10px;
   font-weight: 500;
+  color: var(--text-color);
 }
 
+.chat-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 53px); /* 减去header高度 */
+}
+
+/* 消息容器 */
 .message-container {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  background-color: #f5f5f5;
+  background-color: var(--bg-color);
 }
 
 .message-item {
   display: flex;
   margin-bottom: 15px;
+  width: 100%;
 }
 
 .message-item.received {
@@ -51,123 +78,43 @@
 
 .message-content {
   max-width: 60%;
-}
-
-.message-text {
   padding: 8px 12px;
   border-radius: 4px;
   word-break: break-word;
+  position: relative;
 }
 
-.received .message-text {
-  background-color: #fff;
-  border: 1px solid #e6e6e6;
+.received .message-content {
+  background-color: var(--received-bg);
+  border: 1px solid var(--border-color);
 }
 
-.sent .message-text {
-  background-color: #95ec69;
-  border: 1px solid #95ec69;
+.sent .message-content {
+  background-color: var(--sent-bg);
+  border: 1px solid var(--sent-bg);
 }
 
 .message-time {
   font-size: 12px;
-  color: #999;
+  color: var(--time-color);
   margin-top: 4px;
+  text-align: right;
 }
 
+/* 输入区域 */
 .input-area {
-  padding: 10px;
-  border-top: 1px solid #e6e6e6;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
   background-color: #f7f7f7;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
 }
+
 .inputBox {
   width: 100%;
   display: flex;
-}
-
-.input-tools {
-  margin-right: 10px;
-  display: flex;
-  /* flex-direction: column; */
   align-items: center;
-}
-
-.input-tools .anticon {
-  margin-left: 10px;
-}
-
-.input-tools > * {
-  margin: 5px 0;
-  font-size: 20px;
-  color: #7d7d7d;
-  cursor: pointer;
-}
-
-.ant-input {
-  resize: none;
-  border: none;
-  box-shadow: none;
-  background-color: #fff;
-}
-/* :where(.css-dev-only-do-not-override-36gkoj).ant-list .ant-list-item {
-  display: block;
-} */
-
-.chat-window .ant-btn {
-  margin-left: 10px;
-  background-color: #07c160;
-  border-color: #07c160;
-}
-
-.chat-window .ant-btn:disabled {
-  background-color: #f0f0f0;
-  border-color: #d9d9d9;
-  color: rgba(0, 0, 0, 0.25);
-}
-
-/* .message-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  height: calc(100vh - 200px);
-} */
-
-.message-item {
-  display: flex;
-  margin-bottom: 16px;
-  align-items: center;
-}
-
-.message-item.received {
-  width: 100%;
-}
-
-.message-item.sent {
-  width: 100%;
-}
-
-.message-content {
-  max-width: 60%;
-  /* margin: 0 12px; */
-  position: relative;
-  padding: 8px 10px;
-  border-radius: 4px;
-  background: #f5f5f5;
-}
-
-.message-time {
-  font-size: 12px;
-  color: #999;
-  text-align: right;
-  margin-top: 4px;
-}
-
-.input-area {
-  padding: 16px;
-  border-top: 1px solid #eee;
+  gap: 10px;
 }
 
 .input-tools {
@@ -176,12 +123,33 @@
   margin-bottom: 8px;
 }
 
-.inputBox {
-  position: relative;
+.input-tools .anticon {
+  font-size: 20px;
+  color: var(--hover-color);
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
-.inputIN {
+.input-tools .anticon:hover {
+  color: var(--text-color);
+}
+
+.ant-input {
   resize: none;
+  border: none;
+  box-shadow: none;
+  background-color: #fff;
+  flex: 1;
 }
 
+.chat-window .ant-btn {
+  margin-left: 10px;
+  background-color: transparent;
+  border-color: transparent;
+}
 
+.chat-window .ant-btn:disabled {
+  background-color: var(--disabled-bg);
+  border-color: var(--disabled-border);
+  color: var(--disabled-text);
+}

@@ -91,6 +91,7 @@ const createWindow = async () => {
       contextIsolation: true, // 必须为 true 以确保安全
       sandbox: true,
       nodeIntegration: false,
+      partition: `persist:instance${process.env.ELECTRON_PORT}`,
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),

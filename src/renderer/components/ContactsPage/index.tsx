@@ -3,7 +3,7 @@ import type { CollapseProps } from 'antd';
 import { Layout, Tabs, Input, List, Avatar, Button, Collapse, message } from 'antd';
 import {
   SearchOutlined,
-  UserAddOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
@@ -157,7 +157,7 @@ const ContactsPage: React.FC = () => {
             type="default"
             color="#bbb"
             style={{ backgroundColor: "#f5f5f5", borderColor: '#f5f5f5' }}
-            icon={<UserAddOutlined />}
+            icon={<UnorderedListOutlined />}
           />
         </Header>
         <Content className="contacts-content">

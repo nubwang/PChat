@@ -51,7 +51,10 @@
     "start:renderer": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack serve --config ./.erb/configs/webpack.config.renderer.dev.ts",
     "test": "jest",
     "build:win": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack --config ./.erb/configs/webpack.config.main.prod.ts && electron-builder --win --publish never",
-    "build:linux": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack --config ./.erb/configs/webpack.config.main.prod.ts && electron-builder --linux build --publish never"
+    "build:linux": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack --config ./.erb/configs/webpack.config.main.prod.ts && electron-builder --linux build --publish never",
+    "start:instance1": "PORT=5001 ELECTRON_PORT=3001 npm run start",
+    "start:instance2": "PORT=5002 ELECTRON_PORT=3002 npm run start",
+    "start:all": "npm-run-all --parallel start:instance1 start:instance2"
   },
   "browserslist": [
     "extends browserslist-config-erb"
@@ -112,9 +115,10 @@
     "electron-log": "^5.3.2",
     "electron-updater": "^6.3.9",
     "history": "^5.3.0",
+    "npm-run-all": "^4.1.5",
     "path-browserify": "^1.0.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
     "redux-thunk": "^3.1.0",
@@ -132,7 +136,7 @@
     "@types/node": "22.13.10",
     "@types/react": "^19.0.11",
     "@types/react-dom": "^19.0.4",
-    "@types/react-test-renderer": "^19.0.0",
+    "@types/react-test-renderer": "^18.3.1",
     "@types/styled-components": "^5.1.34",
     "@types/webpack-bundle-analyzer": "^4.7.0",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
@@ -171,7 +175,7 @@
     "node-abi": "^4.9.0",
     "prettier": "^3.5.3",
     "react-refresh": "^0.16.0",
-    "react-test-renderer": "^19.0.0",
+    "react-test-renderer": "^18.3.1",
     "rimraf": "^6.0.1",
     "sass": "^1.86.0",
     "sass-loader": "^16.0.5",

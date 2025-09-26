@@ -1,6 +1,6 @@
-import React, { useState,useEffect, useMemo, useCallback } from 'react';
-import { Input, List, Avatar, Button, Modal,Search, Divider, Typography, Empty, message } from 'antd';
-import { SearchOutlined,UserAddOutlined,UserOutlined } from '@ant-design/icons';
+import React, { useState,useEffect, useMemo, useCallback,useRef } from 'react';
+import { Input, List, Avatar, Button, Modal,Search, Divider, Typography, Empty, message, Dropdown } from 'antd';
+import { SearchOutlined,UserAddOutlined,UnorderedListOutlined,UserOutlined,FileAddOutlined } from '@ant-design/icons';
 import './style.css';
 import ChatWindow from '../ChatWindow';
 import { api } from "../../../static/api";
@@ -11,6 +11,9 @@ import { RootState } from '../store';
 import { formatChatTime } from '../../../utils/timeConversion';
 import { useDispatch } from 'react-redux';
 import { changeContersionId } from '../../store/routerSlice';
+import type { MenuProps } from 'antd';
+import AddFriend from "./addFriend";
+import AddGroup from "./addGroup";
 
 const { Search,TextArea } = Input;
 
@@ -19,15 +22,15 @@ const ChatList: React.FC = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading,setLoading] = useState(false);
-  const [value,setValue] = useState("")
+
+
   const [contact,setContact] = useState({});
   const [infoItems,setInfoItems] = useState([]);
-  const [addData,setAddData] = useState(null);
+
   const [slefInfo,setSlefInfo] = useState(null);
   const [messageApi, contextHolder] = message.useMessage();
-  const [leaveMessage,setLeaveMessage] = useState("");
-  const [remarks,setRemarks] = useState("");
+
+
   const navigate = useNavigate();
   const { sendMessage,subscribe,connectSocket,sendWithReconnect } = useSocket();
   const [chatData, setChatData] = useState([]);
@@ -36,19 +39,23 @@ const ChatList: React.FC = () => {
   const { Conversation } = location.state || {};
   const { isConnected } = useSelector( (state: RootState) => state.socket );
   const { contersionId } = useSelector( (state: RootState) => state.router );
-
+  const GroupRef = useRef<HTMLDivElement>(null);
   // 修改后的 useEffect 逻辑
-useEffect(() => {
-  console.log(isConnected,'isConnected')
-    init();
-}, [isConnected,sendMessage]); // 仅依赖 Conversation
+  useEffect(() => {
+    console.log(isConnected,'isConnected')
+    if (isConnected) {
+      setTimeout(()=>{
+        init();
+      },500)
+    }
+  }, [isConnected,sendMessage]); // 仅依赖 Conversation
 
-const init = useCallback(() => {
-  let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : null;
-  if (!data?.id) return;
-  console.log(data, 'userData');
-  sendMessage("getConversationList", { userId: data.id });
-}, [isConnected, sendMessage]);
+  const init = useCallback(() => {
+    let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : null;
+    if (!data?.id) return;
+    console.log(data, 'userData');
+    sendMessage("getConversationList", { userId: data.id });
+  }, [isConnected, sendMessage]);
 
   useEffect(() => {
     const subscriptions = subscribe("ConversationList", (res) => {
@@ -57,15 +64,6 @@ const init = useCallback(() => {
       const data = res.data;
       if (Array.isArray(data)) { // 确保数据有效性
         setChatData(data);
-        // if (Conversation) {
-        //   const target = data.find(item =>
-        //     item.conversation_id === Conversation.conversation_id
-        //   );
-        //   if (target) {
-        //     setSelectedKey(target.conversation_id);
-        //     setChatWindowData(target);
-        //   }
-        // }
         if(contersionId){
           const target = data.find(item =>
             item.conversation_id === contersionId
@@ -89,86 +87,28 @@ const init = useCallback(() => {
     let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
     setSlefInfo(data);
   },[isConnected])
+
   const showModal = () => {
-    // friends_test: 'friends/test'
-    // navigate("/contact")
-    // window.location.href = '/contact';
     setIsModalOpen(true);
-    // console.log(location,'location')
-    // api.get("friends_test").then((data)=>{
-    //   console.log(data,'1111')
-    // }).catch((err)=>{})
   };
 
-  const handleOk = () => {
-    setIsModalOpen(false);
-    if(slefInfo.id == addData.id){
-      return false;
-    }
-    let params = {
-      userId: slefInfo.id,
-      friendId: addData.id,
-      notes: JSON.stringify([ {nickname: slefInfo.nickname,head_img: slefInfo.head_img,userId: slefInfo.id,remarks: remarks,leaveMessage:leaveMessage} ])
-    }
-    sendMessage("addFriend", params);
-    //privateMessage
-    subscribe("notice", (data) => {
-      console.log(data,'addFriend');
-      if(data.code === 200){
-        messageApi.info(data.message);
-      }else{
-        messageApi.error(data.message);
-      }
-    });
-    // api.post("friends_add",params).then((data)=>{
-    //   console.log(data,'1111')
-    //   messageApi.info(data.message);
-    //   if(data.code === 401)navigate("/login")
-    // }).catch((err)=>{})
-  };
+
 
   const handleCancel = () => {
     setIsModalOpen(false);
   };
-  const onPressEnter = ()=>{
-    api.get("info_other",{id: value}).then((data)=>{
-      console.log(data,'1111')
-      if(data.code === 200){
-        let dataNew = data.data;
-        setAddData(dataNew)
-      }
-      if(data.code === 401)navigate("/login")
-    }).catch((err)=>{})
-  }
-  const onSearch = ()=>{
-    api.get("info_other",{id: value}).then((data)=>{
-      console.log(data,'1111')
-      if(data.code === 200){
-        let dataNew = data.data;
-        setAddData(dataNew)
-      }
-      if(data.code === 401)navigate("/login")
-    }).catch((err)=>{})
-  }
-  const onInput = (e)=>{
-    setValue(e.target.value)
-  }
+
+
+
   const actionItems = [
     { label: '发消息', action: () => message.info('开始聊天') },
   ];
   const listFn = (item)=>{
-    console.log(item,'item')
     dispatch(changeContersionId(item.conversation_id));
     setSelectedKey(item.conversation_id);
     setChatWindowData(item);
   }
-  const leaveMessageFn = (e)=>{
-    console.log('11111',e.target.value)
-    setLeaveMessage(e.target.value)
-  }
-  const remarksFn = (e)=>{
-    setRemarks(e.target.value)
-  }
+
 
   const timeFn = (time)=>{
     const date = new Date(time);
@@ -188,6 +128,29 @@ const init = useCallback(() => {
     const beijingTime = formatter.format(date);
     return beijingTime;
   }
+  const items: MenuProps['items'] = [
+    {
+      key: '1',
+      label: (
+        <div onClick={()=>{
+          console.log(GroupRef,'GroupRef')
+          // GroupRef.current?.showModal()
+        }}>
+          <FileAddOutlined />
+          <span style={{marginLeft: '8px'}}>发起群聊</span>
+        </div>
+      ),
+    },
+    {
+      key: '2',
+      label: (
+        <div onClick={showModal}>
+          <UserAddOutlined />
+          <span style={{marginLeft: '8px'}}>添加朋友</span>
+        </div>
+      ),
+    }
+  ];
 
   return (
     <div className="slef-container">
@@ -200,51 +163,14 @@ const init = useCallback(() => {
             prefix={<SearchOutlined />}
             style={{ width: '100%' }}
           />
-          <Button type="default" color={"#bbb"} style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UserAddOutlined />} onClick={showModal}></Button>
+          <Dropdown menu={{ items }} trigger={['click']} placement="bottomLeft" arrow={{ pointAtCenter: true }}>
+            <Button type="default" color={"#bbb"} style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UnorderedListOutlined />}></Button>
+          </Dropdown>
         </div>
-        <Modal
-          title="申请添加朋友"
-          closable={{ 'aria-label': 'Custom Close Button' }}
-          open={isModalOpen}
-          mask={false}
-          closable={false}
-          okText={"确定"}
-          cancelText={"取消"}
-          cancelButtonProps={}
-          onOk={handleOk}
-          onCancel={handleCancel}
-        >
-          <Divider />
-          <Search value={value} onChange={onInput} placeholder="输入用户名手机号或者编号" addonBefore={<div>联系人</div>} prefix={<UserOutlined />} loading={loading} onPressEnter={onPressEnter} onSearch={onSearch} />
-          <Divider />
-          {
-            addData && slefInfo.id != addData.id?
-            <>
-              <div>
-                <Typography.Title level={5}>发送添加朋友申请</Typography.Title>
-                <TextArea value={leaveMessage} onChange={leaveMessageFn} maxLength={100} placeholder="留言" style={{ height: 80, resize: 'none',backgroundColor: '#fff' }} />
-              </div>
-              <Divider />
-              <div>
-                <Typography.Title level={5}>设置备注</Typography.Title>
-                <Input value={remarks} onChange={remarksFn} placeholder="备注" />
-              </div>
-              <Divider />
-            </>
-            :
-            null
-          }
-          {
-            addData?
-            <div className="profile-section">
-              <Avatar src={addData?.head_img} size={60} />
-              <h3 className="contact-name">{addData?.nickname}</h3>
-              <p className="contact-description">{addData?.id}</p>
-            </div>
-            :
-            <Empty />
-          }
-        </Modal>
+        <AddFriend isModalOpen={isModalOpen} handleCancel={handleCancel} isConnected={isConnected} />
+        <AddGroup GroupRef={GroupRef}/>
+        <Divider style={{ margin: '10px 0' }} />
+
         <List
           itemLayout="horizontal"
           dataSource={chatData}

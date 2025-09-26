@@ -7,6 +7,9 @@ interface RouterState {
   previousPath: string | null;
   tab: string | null; // 新增 tab 字段
   contersionId: string | null; // 新增 tab 字段
+  messageList: any[]; // 消息列表
+  hasMore: boolean; // 是否有更多消息
+  page: number; // 当前页码
 }
 
 const initialState: RouterState = {
@@ -14,6 +17,9 @@ const initialState: RouterState = {
   previousPath: "/",
   tab: '1', // 初始化为 null
   contersionId: null,
+  messageList: [],
+  hasMore: true,
+  page: 0,
 };
 
 export const routerSlice = createSlice({
@@ -29,9 +35,18 @@ export const routerSlice = createSlice({
     },
     changeContersionId: (state, action: PayloadAction<string | null>) => {
       state.contersionId = action.payload; // 更新 tab 字段
-    }
+    },
+    changePage: (state, action: PayloadAction<string | null>) => {
+      state.page = action.payload;
+    },
+    pushMessageList: (state, action: PayloadAction<string | null>) => {
+      state.messageList = action.payload;
+    },
+    changeHasMore: (state, action: PayloadAction<string | null>) => {
+      state.hasMore = action.payload;
+    },
   },
 });
 
-export const { setCurrentPath,changeTab,changeContersionId } = routerSlice.actions;
+export const { setCurrentPath,changeTab,changeContersionId,changePage,pushMessageList,changeHasMore } = routerSlice.actions;
 export default routerSlice.reducer;
