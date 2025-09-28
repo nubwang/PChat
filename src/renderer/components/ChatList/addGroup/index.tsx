@@ -17,12 +17,12 @@ export interface AddGroupRef {
 
 // 模拟用户数据
 const mockUsersData = [
-  { id: '1', username: '张三', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
-  { id: '2', username: '李四', avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
-  { id: '3', username: '王五', avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
-  { id: '4', username: '赵六', avatar: 'https://randomuser.me/api/portraits/women/4.jpg' },
-  { id: '5', username: '钱七', avatar: 'https://randomuser.me/api/portraits/men/5.jpg' },
-  { id: '6', username: '孙八', avatar: 'https://randomuser.me/api/portraits/women/6.jpg' },
+  { id: '1', username: '张三', head_img: 'https://randomuser.me/api/portraits/men/1.jpg' },
+  { id: '2', username: '李四', head_img: 'https://randomuser.me/api/portraits/women/2.jpg' },
+  { id: '3', username: '王五', head_img: 'https://randomuser.me/api/portraits/men/3.jpg' },
+  { id: '4', username: '赵六', head_img: 'https://randomuser.me/api/portraits/women/4.jpg' },
+  { id: '5', username: '钱七', head_img: 'https://randomuser.me/api/portraits/men/5.jpg' },
+  { id: '6', username: '孙八', head_img: 'https://randomuser.me/api/portraits/women/6.jpg' },
 ];
 
 const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
@@ -36,11 +36,12 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
   const [mockUsers, setMockUsers] = useState(mockUsersData);
 
   useEffect(() => {
+    console.log('Fetching users from database...');
     window.electronChat.db.getStatusFriends("accepted").then((data) => {
       console.log(data, '获取好友列表');
       setMockUsers(data);
     });
-  }, []);
+  }, [isModalOpen]);
 
   useImperativeHandle(ref, () => ({
     openModal: () => {

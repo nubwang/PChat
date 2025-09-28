@@ -23,6 +23,8 @@ const LoginPage: React.FC = () => {
     api.post("user_login",{username,password}).then((data)=>{
       if(data.code === 200){
         // initFn();
+        console.log(data,'data')
+        window.electronChat.db.login(data.data?.data[0].id);
         localStorage.setItem("token",data.data.token)
         localStorage.setItem("userData",JSON.stringify(data.data?.data[0]))
         let str = currentPath == previousPath?"/":previousPath

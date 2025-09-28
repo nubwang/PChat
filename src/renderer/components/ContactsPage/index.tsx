@@ -54,10 +54,11 @@ const ContactsPage: React.FC = () => {
         }
         if(data.data.friendAccepted && data.data.friendAccepted.length > 0){
           data.data.friendAccepted.forEach((item,index)=>{
+            console.log('accepted')
             window.electronChat.db.saveFriend(item.id, item.head_img,item.username, "accepted");
           });
         }
-        window.electronChat.db.getFriendByUserId(6).then((data) => {
+        window.electronChat.db.getStatusFriends("accepted").then((data) => {
           console.log(data, '获取好友列表');
         });
         setFriendsPending(data.data.friendPending);

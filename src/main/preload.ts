@@ -30,7 +30,11 @@ contextBridge.exposeInMainWorld('electronChat', {
     addMessage: (msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size) =>
       ipcRenderer.invoke('db:add-message',msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size),
     getMessagesByConversation: (conversation_id, limit, offset) =>
-      ipcRenderer.invoke('db:get-messages-by-conversation',conversation_id, limit, offset)
+      ipcRenderer.invoke('db:get-messages-by-conversation',conversation_id, limit, offset),
+    login: (userId) =>
+      ipcRenderer.invoke('login', { userId }),
+    logout: () =>
+      ipcRenderer.invoke('logout')
   }
 });
 

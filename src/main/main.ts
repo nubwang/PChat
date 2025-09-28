@@ -132,6 +132,29 @@ const createWindow = async () => {
 /**
  * Add event listeners...
  */
+// 存储当前用户ID
+let currentUserId = null;
+ipcMain.handle('login', async (event, { userId }) => {
+  try {
+    currentUserId = userId;
+    db.initForUser(userId);
+    return { success: true };
+  } catch (error) {
+    console.error('Login error:', error);
+    return { success: false, error: error.message };
+  }
+});
+// 登出时关闭数据库
+ipcMain.handle('logout', async (event) => {
+  try {
+    db.close();
+    currentUserId = null;
+    return { success: true };
+  } catch (error) {
+    console.error('Logout error:', error);
+    return { success: false, error: error.message };
+  }
+});
 // 好友表 getFriendByUserId
 ipcMain.handle('db:add-friend', (event, id, head_img,username, status) => {
   return db.saveFriend(id, head_img,username, status);

@@ -1,19 +1,38 @@
-// .electron/database.js
 const Database = require('better-sqlite3');
 const path = require('path');
 const { app } = require('electron');
 
 class ChatDatabase {
   constructor() {
-    this.dbPath = path.join(app.getPath('userData'), 'chat.db');
-    console.log('Database path:', this.dbPath);
-    this.db = new Database(this.dbPath);
-    this.init();
+    // 不再在这里初始化数据库，改为由外部传入用户ID
+    this.db = null;
+    this.dbPath = null;
   }
 
-  init() {
-    // this.db.exec(`DROP TABLE IF EXISTS messages;`);
-    // const schema = this.db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='conversations'`).get();
+  /**
+   * 初始化用户数据库
+   * @param {number} userId - 用户ID
+   */
+  initForUser(userId) {
+    if (this.db) {
+      this.close();
+    }
+
+    // 使用 Electron 的 userData 路径，避免权限问题
+    this.dbPath = path.join(app.getPath('userData'), `user_${userId}.db`);
+    // this.dbPath = path.join(userDbDir, `user_${userId}.db`);
+    console.log(this.dbPath,'this.dbPath')
+    // 打开数据库连接（如果文件不存在，better-sqlite3 会自动创建）
+    this.db = new Database(this.dbPath);
+
+    // 初始化表结构
+    this.initSchema();
+  }
+
+  /**
+   * 初始化数据库表结构
+   */
+  initSchema() {
     // 启用外键约束
     this.db.pragma("foreign_keys = ON");
 
@@ -28,7 +47,7 @@ class ChatDatabase {
       )
     `);
 
-    // 创建用户表
+    // 创建用户表（注意：这里存储的是好友信息，不是当前用户信息）
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY,
@@ -48,7 +67,7 @@ class ChatDatabase {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS conversations (
         conversation_id INTEGER PRIMARY KEY,
-        user_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,  -- 这里存储的是当前用户的ID（冗余字段，便于查询）
         peer_type TEXT CHECK(peer_type IN ('user', 'group')) NOT NULL,
         peer_id INTEGER NOT NULL,
         last_msg_id INTEGER,
@@ -153,8 +172,20 @@ class ChatDatabase {
     `);
   }
 
+  /**
+   * 关闭数据库连接
+   */
+  close() {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+      this.dbPath = null;
+    }
+  }
+
   // 好友相关方法
   saveFriend(id, head_img, username, status) {
+    if (!this.db) throw new Error('Database not initialized for user');
     const stmt = this.db.prepare(`
       INSERT OR IGNORE INTO friends
         (user_id, head_img, username, status)
@@ -165,18 +196,21 @@ class ChatDatabase {
   }
 
   getStatusFriends(status) {
+    if (!this.db) throw new Error('Database not initialized for user');
     return this.db.prepare(`
       SELECT * FROM friends
       WHERE status = ?
     `).all(status);
   }
-  // 通过user_id获取好友
+
   getFriendByUserId(user_id) {
+    if (!this.db) throw new Error('Database not initialized for user');
     return this.db.prepare(`SELECT * FROM friends WHERE user_id = ?`).get(user_id);
   }
 
   // 用户相关方法
   addUser(id, username, nickname, email, password, avatar = '', head_img = '', status = 'offline') {
+    if (!this.db) throw new Error('Database not initialized for user');
     const stmt = this.db.prepare(`
       INSERT INTO users
         (id, username, nickname, email, password, avatar, head_img, status)
@@ -187,55 +221,64 @@ class ChatDatabase {
   }
 
   getUserById(id) {
+    if (!this.db) throw new Error('Database not initialized for user');
     return this.db.prepare(`
       SELECT * FROM users
       WHERE id = ?
     `).get(id);
   }
 
-  //一下写出conversations表的相关方法
-  addConversation(conversation_id,user_id, peer_type, peer_id, localstrongID) {
+  // 会话相关方法
+  addConversation(conversation_id, user_id, peer_type, peer_id, localstrongID) {
+    if (!this.db) throw new Error('Database not initialized for user');
+
     let stmt;
-    //验证conversation_id是否已经存在
-    if(peer_type === 'user'){
+    // 验证conversation_id是否已经存在
+    if (peer_type === 'user') {
       const existing = this.db.prepare(`
         SELECT * FROM conversations
         WHERE conversation_id = ?
       `).get(conversation_id);
+
       if (existing) {
-        //更新unread_count和updated_at字段
-          existing.unread_count = 0;
-          existing.updated_at = new Date().toISOString();
-          const updateStmt = this.db.prepare(`
-            UPDATE conversations
-            SET unread_count = ?, updated_at = ?
-            WHERE conversation_id = ?
-          `);
-          updateStmt.run(existing.unread_count, existing.updated_at, conversation_id);
+        // 更新unread_count和updated_at字段
+        existing.unread_count = 0;
+        existing.updated_at = new Date().toISOString();
+        const updateStmt = this.db.prepare(`
+          UPDATE conversations
+          SET unread_count = ?, updated_at = ?
+          WHERE conversation_id = ?
+        `);
+        updateStmt.run(existing.unread_count, existing.updated_at, conversation_id);
         return existing;
-      }else{
-        // let friendData = this.getFriendByUserId(user_id == localstrongID?peer_id:user_id);
-        // console.log(friendData,localstrongID,'friendData');
+      } else {
         stmt = this.db.prepare(`
-          INSERT INTO conversations (conversation_id, user_id, peer_type, peer_id) VALUES (?, ?, ?, ?)
+          INSERT INTO conversations
+            (conversation_id, user_id, peer_type, peer_id)
+          VALUES (?, ?, ?, ?)
         `);
       }
-    }else{
+    } else {
       stmt = this.db.prepare(`
-        INSERT INTO conversations (conversation_id, user_id, peer_type, peer_id) VALUES (?, ?, ?, ?)
+        INSERT INTO conversations
+          (conversation_id, user_id, peer_type, peer_id)
+        VALUES (?, ?, ?, ?)
       `);
     }
 
-    return stmt.run(conversation_id,user_id, peer_type, peer_id);
+    return stmt.run(conversation_id, user_id, peer_type, peer_id);
   }
 
   getConversationAll() {
+    if (!this.db) throw new Error('Database not initialized for user');
     return this.db.prepare(`
       SELECT * FROM conversations ORDER BY updated_at DESC;
     `).all();
   }
 
+  // 消息相关方法
   addMessage(msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration = null, file_size = null) {
+    if (!this.db) throw new Error('Database not initialized for user');
     const stmt = this.db.prepare(`
       INSERT INTO messages
         (msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size)
@@ -245,8 +288,8 @@ class ChatDatabase {
     return stmt.run(msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size);
   }
 
-  //获取某个会话的所有消息
   getMessagesByConversation(conversation_id, limit = 20, offset = 0) {
+    if (!this.db) throw new Error('Database not initialized for user');
     return this.db.prepare(`
       SELECT * FROM messages
       WHERE conversation_id = ?
@@ -254,7 +297,8 @@ class ChatDatabase {
       LIMIT ? OFFSET ?
     `).all(conversation_id, limit, offset);
   }
-
 }
 
-module.exports = new ChatDatabase();
+// 创建单例实例，但不再直接导出
+const chatDatabase = new ChatDatabase();
+module.exports = chatDatabase;
