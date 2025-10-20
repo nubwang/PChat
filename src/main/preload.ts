@@ -13,6 +13,10 @@ contextBridge.exposeInMainWorld('electronChat', {
       ipcRenderer.invoke('db:get-friends-by-status', status),
     getFriendByUserId: (userId) =>
       ipcRenderer.invoke('db:get-friends-by-user', userId),
+    changeFriendStatus: (userId,newStatus) =>
+      ipcRenderer.invoke('db:change-friend-status', userId,newStatus),
+    deleteFriendByUserId: (userId) =>
+      ipcRenderer.invoke('db:delete-friend-by-user-id', userId),
 
     // 用户表
     addUser: (id, username, nickname, email, password, avatar, head_img, status) =>

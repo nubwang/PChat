@@ -37,10 +37,14 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
 
   useEffect(() => {
     console.log('Fetching users from database...');
-    window.electronChat.db.getStatusFriends("accepted").then((data) => {
-      console.log(data, '获取好友列表');
-      setMockUsers(data);
-    });
+    try {
+      window.electronChat.db.getStatusFriends("accepted").then((data) => {
+        console.log(data, '获取好友列表');
+        setMockUsers(data);
+      });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
   }, [isModalOpen]);
 
   useImperativeHandle(ref, () => ({
@@ -52,6 +56,7 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
   }));
 
   const handleSelectUser = (userId: string) => {
+    console.log(userId,'userId')
     setSelectedUsers(prev =>
       prev.includes(userId)
         ? prev.filter(id => id !== userId)
@@ -61,12 +66,13 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
 
   const handleConfirm = () => {
     if (selectedUsers.length > 0) {
+      console.log(selectedUsers,'selectedUsers')
       onConfirm?.(selectedUsers);
       setIsModalOpen(false);
     }
   };
 
-  const filteredUsers = mockUsers.filter(user =>
+  const filteredUsers = mockUsers?.filter?.(user =>
     user?.username?.toLowerCase().includes(searchValue?.toLowerCase())
   );
 
@@ -97,9 +103,9 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
             <div className="group-creator-section-title">已选成员 ({selectedUsers.length})</div>
             <div className="group-creator-avatar-list">
               {selectedUsers.map(userId => {
-                const user = mockUsers.find(u => u.id === userId);
+                const user = mockUsers.find(u => u.user_id === userId);
                 return user ? (
-                  <Tooltip title={user.name} key={user.id}>
+                  <Tooltip title={user.name} key={user.user_id}>
                     <Avatar
                       src={user.head_img}
                       size="small"
@@ -121,13 +127,13 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
             renderItem={(user) => (
               <List.Item
                 className="group-creator-contact-item"
-                onClick={() => handleSelectUser(user.id)}
+                onClick={() => handleSelectUser(user.user_id)}
               >
                 <div className="group-creator-contact-info">
                   <Avatar src={user.head_img} className="group-creator-selectable-avatar" />
                   <span className="group-creator-contact-name">{user.username}</span>
                 </div>
-                {selectedUsers.includes(user.id) && (
+                {selectedUsers.includes(user.user_id) && (
                   <Tag color="#07C160" className="group-creator-selected-tag">
                     <span className="icon-check">✓</span>
                   </Tag>

@@ -50,12 +50,33 @@ const ChatList: React.FC = () => {
     }
   }, [isConnected,sendMessage]); // 仅依赖 Conversation
 
+  const onConfirm = useCallback((selectedUsers) => {
+    console.log('创建群聊', selectedUsers);
+      let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+      let groupData = {
+        creatorId: data.id,
+        memberIds: selectedUsers,
+      }
+      // return false;
+      sendWithReconnect("createGroup", groupData, (response) => {
+        console.log('createGroup response:', response);
+        if(response.code === 200){
+          messageApi.success('群聊创建成功');
+          setTimeout(()=>{
+            init();
+          },500)
+        }else{
+          messageApi.error(response.message);
+        }
+      });
+  }, [sendWithReconnect, messageApi]);
+
   const init = useCallback(() => {
     let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : null;
     if (!data?.id) return;
-    console.log(data, 'userData');
+    console.log(data, 'userData----1111');
     sendMessage("getConversationList", { userId: data.id });
-  }, [isConnected, sendMessage]);
+  }, [isConnected, sendMessage, onConfirm]);
 
   useEffect(() => {
     const subscriptions = subscribe("ConversationList", (res) => {
@@ -156,19 +177,20 @@ const ChatList: React.FC = () => {
     <div className="slef-container">
       <div className="chat-list-container">
         {contextHolder}
-        <div className="search-bar">
+        <div className="search-bar custom-title-bar">
           <Search
+            className='custom-title-bar-no'
             placeholder="搜索"
             allowClear
             prefix={<SearchOutlined />}
             style={{ width: '100%' }}
           />
           <Dropdown menu={{ items }} trigger={['click']} placement="bottomLeft" arrow={{ pointAtCenter: true }}>
-            <Button type="default" color={"#bbb"} style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UnorderedListOutlined />}></Button>
+            <Button type="default" color={"#bbb"} className='custom-title-bar-no' style={{backgroundColor: "#f5f5f5",borderColor: '#f5f5f5'}} icon={<UnorderedListOutlined />}></Button>
           </Dropdown>
         </div>
         <AddFriend isModalOpen={isModalOpen} handleCancel={handleCancel} isConnected={isConnected} />
-        <AddGroup ref={groupRef}/>
+        <AddGroup ref={groupRef} onConfirm={onConfirm}/>
         <Divider style={{ margin: '10px 0' }} />
 
         <List

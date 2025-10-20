@@ -49,7 +49,6 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [onoff, setOnoff] = useState(true);
   const [conversationId, setConversationId] = useState(chatData?.conversation_id || '');
 
   // Refs
@@ -71,7 +70,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     setUserData(userData);
 
     const handleNewMessage = (data: any) => {
-      console.log(data, 'newMessage');
+      console.log(data, 'newMessage2222');
       if (data.code === 200) {
         let newData = data.data;
         newData.sender_avatar = userData.avatar;
@@ -90,7 +89,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     if (page === 0) {
       loadHistoryMessages();
     }
-  }, [page, chatData]);
+  }, [page, chatData, isLoadingHistory]);
 
   // 加载历史消息（优化版）
   const loadHistoryMessages = useCallback(async () => {
@@ -112,6 +111,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
   useEffect(() => {
     const handleNewMessage = (data: any) => {
+      console.log(data, 'conversationMessages');
       if (data.code === 200) {
         let newData = data.messages;
         if (newData && newData.length > 0) {
@@ -146,7 +146,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     };
     let unsubscribe = subscribe('conversationMessages', handleNewMessage);
     return () => unsubscribe?.();
-  }, [subscribe, chatData]);
+  }, [subscribe, chatData, isLoadingHistory]);
 
   // 滚动处理（优化版）
   const handleScroll = useCallback(
@@ -196,8 +196,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
   const showDrawer = () => {
     //利用onoff控制第二次点击关闭抽屉
-    setOnoff(onoff => !onoff);
-    setOpen(onoff);
+    setOpen(open => !open);
   };
   const onClose = () => {
     setOpen(false);
@@ -208,10 +207,10 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
       {chatData ? (
         <div className="chat-container">
           {/* 合并的头部区域 */}
-          <div className="chat-header">
+          <div className="chat-header custom-title-bar">
             <span className="chat-title">{chatData.username}</span>
             <Button onClick={showDrawer}>
-              <EllipsisOutlined style={{ fontSize: '24px', color: '#000' }} />
+              <EllipsisOutlined className='custom-title-bar-no' style={{ fontSize: '24px', color: '#000' }} />
             </Button>
           </div>
 
@@ -228,28 +227,45 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                 dataSource={messages}
                 split={false}
                 renderItem={(item) => {
-                  let friend = chatData.user_id === userData.id ? chatData.peer_id : chatData.user_id;
-                  if(item.sender_id == friend || item.receiver_id == friend){
+                  let friend = chatData.user_id == userData.id ? chatData.peer_id : chatData.user_id;
+                  if(((item.sender_id == friend && item.receiver_id == userData.id) || (item.receiver_id == friend && item.sender_id == userData.id))&& item.receiver_type == chatData.peer_type){
                     return (
                       <List.Item key={item.id}>
                         <div className={`message-item ${
                           item.sender_id === userData?.id ? 'sent' : 'received'
                         }`}>
                           {item.sender_id !== userData?.id && (
-                            <Avatar src={item.sender_avatar} />
+                            <Avatar src={chatData.avatar} />
                           )}
                           <div className="message-content">
                             <div className="message-text">{item.content}</div>
                             <div className="message-time">{item.create_time}</div>
                           </div>
                           {item.sender_id === userData?.id && (
-                            <Avatar src={item.sender_avatar} />
+                            <Avatar src={userData.avatar} />
                           )}
                         </div>
                       </List.Item>
                     )
-                  }else{
-                    return null;
+                  }else if(item.receiver_id == chatData.peer_id && item.receiver_type == chatData.peer_type){
+                    return (
+                      <List.Item key={item.id}>
+                        <div className={`message-item ${
+                          item.sender_id === userData?.id ? 'sent' : 'received'
+                        }`}>
+                          {item.sender_id !== userData?.id && (
+                            <Avatar src={chatData.avatar} />
+                          )}
+                          <div className="message-content">
+                            <div className="message-text">{item.content}</div>
+                            <div className="message-time">{item.create_time}</div>
+                          </div>
+                          {item.sender_id === userData?.id && (
+                            <Avatar src={userData.avatar} />
+                          )}
+                        </div>
+                      </List.Item>
+                    )
                   }
                 }}
               />

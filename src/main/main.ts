@@ -83,6 +83,7 @@ const createWindow = async () => {
   };
 
   mainWindow = new BrowserWindow({
+    titleBarStyle: 'hidden',
     show: false,
     width: 1024,
     height: 728,
@@ -155,7 +156,7 @@ ipcMain.handle('logout', async (event) => {
     return { success: false, error: error.message };
   }
 });
-// 好友表 getFriendByUserId
+// 好友表 getFriendByUserId changeFriendStatus deleteFriendByUserId
 ipcMain.handle('db:add-friend', (event, id, head_img,username, status) => {
   return db.saveFriend(id, head_img,username, status);
 });
@@ -165,6 +166,13 @@ ipcMain.handle('db:get-friends-by-status', (event, status) => {
 ipcMain.handle('db:get-friends-by-user', (event, userId) => {
   return db.getFriendByUserId(userId);
 });
+ipcMain.handle('db:change-friend-status', (event, userId,newStatus) => {
+  return db.changeFriendStatus(userId,newStatus);
+});
+ipcMain.handle('db:delete-friend-by-user-id', (event, userId) => {
+  return db.deleteFriendByUserId(userId);
+});
+
 // 用户表相关
 ipcMain.handle('db:add-user', (event, id, username, nickname, email, password, avatar, head_img, status) => {
   return db.addUser(id, username, nickname, email, password, avatar, head_img, status);

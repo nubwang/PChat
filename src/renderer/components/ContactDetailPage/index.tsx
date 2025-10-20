@@ -41,6 +41,7 @@ const ContactDetailPage: React.FC = ({contactData}) => {
       console.log(data,'1111')
       if(data.code === 200){
         setNum(num + 1);
+        window.electronChat.db.changeFriendStatus(contact.id,"accepted");
       }
     }).catch((err)=>{})
   };

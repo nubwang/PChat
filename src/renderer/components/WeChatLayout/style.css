@@ -11,4 +11,30 @@
     height: 100vh;
   }
 }
+.logo {
+  padding: 10px 0;
+  text-align: center;
+  margin-top: 20px;
+  .username {
+    display: block;
+    font-size: 12px;
+    color: #333;
+  }
+}
+.custom-title-bar {
+  -webkit-app-region: drag; /* 允许拖动 */
+}
+
+.window-controls button {
+  -webkit-app-region: no-drag; /* 排除按钮区域 */
+}
+.custom-title-bar-no {
+  -webkit-app-region: no-drag; /* 排除按钮区域 */
+}
+.WeChatLayout .ant-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
 

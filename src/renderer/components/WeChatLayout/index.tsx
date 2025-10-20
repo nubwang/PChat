@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { Layout, Menu, type MenuProps } from 'antd';
+import { Layout, Menu, type MenuProps, Avatar } from 'antd';
 import {
   WechatOutlined,
   ContactsOutlined,
@@ -42,10 +42,16 @@ const WeChatLayout: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const tab = useSelector((state: RootState) => state.router.tab);
+  const [userData, setUserData] = useState<any>(null);
+  //初始赋值
   // setSelectedKey(tab as string);
   useEffect(() => {
     if(tab){
       console.log(tab,'tabtabtabuseEffect')
+      const userDataStr = localStorage.getItem('userData');
+      if (userDataStr) {
+        setUserData(JSON.parse(userDataStr));
+      }
       setSelectedKey(tab as string);
     }
   }, [tab]);
@@ -66,11 +72,15 @@ const WeChatLayout: React.FC = () => {
   return (
     <Layout className="wechat-container WeChatLayout">
       <Sider width={80} className="sidebar">
+        <div className="logo">
+          <Avatar width={"50%"} src={userData?.head_img} />
+          <span className='username'>{userData?.username}</span>
+        </div>
         <Menu
           mode="vertical"
           selectedKeys={tab ? [tab] : ['1']}
           onSelect={(i)=>{handleMenuSelect(i)}}
-          className="sidebar-menu"
+          className="sidebar-menu custom-title-bar"
           items={items}
         >
         </Menu>

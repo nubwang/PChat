@@ -185,7 +185,7 @@ class ChatDatabase {
 
   // 好友相关方法
   saveFriend(id, head_img, username, status) {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     const stmt = this.db.prepare(`
       INSERT OR IGNORE INTO friends
         (user_id, head_img, username, status)
@@ -196,7 +196,7 @@ class ChatDatabase {
   }
 
   getStatusFriends(status) {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     return this.db.prepare(`
       SELECT * FROM friends
       WHERE status = ?
@@ -204,13 +204,25 @@ class ChatDatabase {
   }
 
   getFriendByUserId(user_id) {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     return this.db.prepare(`SELECT * FROM friends WHERE user_id = ?`).get(user_id);
+  }
+
+  deleteFriendByUserId(userId) {
+    if (!this.db) return "Database not initialized for user";
+    const stmt = this.db.prepare("DELETE FROM friends WHERE user_id = ?");
+    return stmt.run(userId);
+  }
+
+  changeFriendStatus(userId, newStatus) {
+    if (!this.db) return "Database not initialized for user";
+    const stmt = this.db.prepare("UPDATE friends SET status = ? WHERE user_id = ?");
+    return stmt.run(newStatus, userId);
   }
 
   // 用户相关方法
   addUser(id, username, nickname, email, password, avatar = '', head_img = '', status = 'offline') {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     const stmt = this.db.prepare(`
       INSERT INTO users
         (id, username, nickname, email, password, avatar, head_img, status)
@@ -221,7 +233,7 @@ class ChatDatabase {
   }
 
   getUserById(id) {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     return this.db.prepare(`
       SELECT * FROM users
       WHERE id = ?
@@ -230,7 +242,7 @@ class ChatDatabase {
 
   // 会话相关方法
   addConversation(conversation_id, user_id, peer_type, peer_id, localstrongID) {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
 
     let stmt;
     // 验证conversation_id是否已经存在
@@ -270,7 +282,7 @@ class ChatDatabase {
   }
 
   getConversationAll() {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     return this.db.prepare(`
       SELECT * FROM conversations ORDER BY updated_at DESC;
     `).all();
@@ -278,7 +290,7 @@ class ChatDatabase {
 
   // 消息相关方法
   addMessage(msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration = null, file_size = null) {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     const stmt = this.db.prepare(`
       INSERT INTO messages
         (msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size)
@@ -289,7 +301,7 @@ class ChatDatabase {
   }
 
   getMessagesByConversation(conversation_id, limit = 20, offset = 0) {
-    if (!this.db) throw new Error('Database not initialized for user');
+    if (!this.db) return "Database not initialized for user";
     return this.db.prepare(`
       SELECT * FROM messages
       WHERE conversation_id = ?
