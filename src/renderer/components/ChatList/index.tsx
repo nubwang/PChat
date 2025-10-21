@@ -203,7 +203,7 @@ const ChatList: React.FC = () => {
               backgroundColor: selectedKey === item.conversation_id ? '#e2e2e2' : 'transparent',
             }}>
               <List.Item.Meta
-                avatar={<Avatar src={item.avatar} />}
+                avatar={<Avatar src={item.avatar} shape="square" />}
                 title={<span>{item.username}</span>}
                 description={item.last_msg_content?item.last_msg_content:"暂无消息"}
                 onClick={() => {

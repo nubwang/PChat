@@ -21,7 +21,7 @@ interface GroupMember {
 
 const DrawerGroup: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   // 群成员数据
-  const [groupMembers] = useState<GroupMember[]>([
+  const [groupMembers,setGroupMembers] = useState<GroupMember[]>([
     { id: '1', name: '张三', avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960', isOwner: false },
     { id: '2', name: '李四', avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960', isOwner: false },
     { id: '3', name: '王五', avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960', isOwner: true },

@@ -79,6 +79,7 @@
 .message-content {
   max-width: 60%;
   padding: 8px 12px;
+  margin: 0 10px;
   border-radius: 4px;
   word-break: break-word;
   position: relative;

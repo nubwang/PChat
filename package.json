@@ -54,7 +54,8 @@
     "build:linux": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack --config ./.erb/configs/webpack.config.main.prod.ts && electron-builder --linux build --publish never",
     "start:instance1": "PORT=5001 ELECTRON_PORT=3001 npm run start",
     "start:instance2": "PORT=5002 ELECTRON_PORT=3002 npm run start",
-    "start:all": "npm-run-all --parallel start:instance1 start:instance2"
+    "start:instance3": "PORT=5003 ELECTRON_PORT=3003 npm run start",
+    "start:all": "npm-run-all --parallel start:instance1 start:instance2 start:instance3"
   },
   "browserslist": [
     "extends browserslist-config-erb"

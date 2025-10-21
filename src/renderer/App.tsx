@@ -44,7 +44,9 @@ function AppContent() {
 
   useEffect(()=>{
     let token = localStorage.getItem("token");
+    let userData = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData") || '{}'):{};
     if(!token) navigate("/login")
+      if(userData.id) window.electronChat.db.login(userData.id);
   },[token])
 
   useEffect(() => {

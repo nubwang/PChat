@@ -17,7 +17,8 @@ import { resolveHtmlPath } from './util';
 const db = require('./database');
 console.log('Module path:', require.resolve('better-sqlite3'));
 
-
+app.commandLine.appendSwitch('disable-renderer-backgrounding'); // 防止渲染进程后台化
+app.commandLine.appendSwitch('enable-web-bluetooth'); // 增强系统 API 兼容性
 
 
 class AppUpdater {
@@ -87,6 +88,7 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
+    enableBlinkFeatures: 'InputMethodEditor',
     icon: getAssetPath('icon.png'),
     webPreferences: {
       contextIsolation: true, // 必须为 true 以确保安全

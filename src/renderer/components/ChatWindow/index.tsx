@@ -203,9 +203,9 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
   };
 
   return (
-    <div className="chat-window">
+    <div className="chat-window custom-title-bar-no">
       {chatData ? (
-        <div className="chat-container">
+        <div className="chat-container custom-title-bar-no">
           {/* 合并的头部区域 */}
           <div className="chat-header custom-title-bar">
             <span className="chat-title">{chatData.username}</span>
@@ -235,14 +235,14 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                           item.sender_id === userData?.id ? 'sent' : 'received'
                         }`}>
                           {item.sender_id !== userData?.id && (
-                            <Avatar src={chatData.avatar} />
+                            <Avatar shape="circle" src={chatData.avatar} />
                           )}
                           <div className="message-content">
                             <div className="message-text">{item.content}</div>
                             <div className="message-time">{item.create_time}</div>
                           </div>
                           {item.sender_id === userData?.id && (
-                            <Avatar src={userData.avatar} />
+                            <Avatar shape="circle" src={userData.avatar} />
                           )}
                         </div>
                       </List.Item>
@@ -254,14 +254,14 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                           item.sender_id === userData?.id ? 'sent' : 'received'
                         }`}>
                           {item.sender_id !== userData?.id && (
-                            <Avatar src={chatData.avatar} />
+                            <Avatar shape="circle" src={chatData.avatar} />
                           )}
                           <div className="message-content">
                             <div className="message-text">{item.content}</div>
                             <div className="message-time">{item.create_time}</div>
                           </div>
                           {item.sender_id === userData?.id && (
-                            <Avatar src={userData.avatar} />
+                            <Avatar shape="circle" src={userData.avatar} />
                           )}
                         </div>
                       </List.Item>
