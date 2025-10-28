@@ -68,11 +68,13 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     // messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     let userData = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : localStorage.getItem("userData");
     setUserData(userData);
+    if(chatData?.peer_type === "group") sendMessage('get_group_members', {groupId: chatData?.peer_id});
 
     const handleNewMessage = (data: any) => {
-      console.log(data, 'newMessage2222');
       if (data.code === 200) {
         let newData = data.data;
+        console.log(data, 'newMessage2222',newData.conversation_id, userData.id);
+        sendMessage('get_conversation_info', {conversationId: newData.conversation_id, userId: userData.id});
         newData.sender_avatar = userData.avatar;
         setMessages(prev => [...prev, newData]);
       } else {
@@ -166,6 +168,8 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     const params = {
       conversation_id: chatData.conversation_id,
       sender_id: data.id,
+      sender_avatar: data.avatar,
+      sender_name: data.username,
       receiver_type: chatData.peer_type,
       receiver_id: chatData.peer_id === data.id ? chatData.user_id : chatData.peer_id,
       content_type: 'text',
@@ -216,7 +220,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
           {/* 消息容器和输入区域 */}
           <div className="chat-content">
-            <DrawerGroup open={open} onClose={onClose} />
+            <DrawerGroup open={open} onClose={onClose} chatData={chatData} />
             <div className="message-container" onScroll={handleScroll} ref={messageContainerRef}>
               <List
                 header={
@@ -235,7 +239,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                           item.sender_id === userData?.id ? 'sent' : 'received'
                         }`}>
                           {item.sender_id !== userData?.id && (
-                            <Avatar shape="circle" src={chatData.avatar} />
+                            <Avatar shape="circle" src={item.sender_avatar} />
                           )}
                           <div className="message-content">
                             <div className="message-text">{item.content}</div>
@@ -254,7 +258,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                           item.sender_id === userData?.id ? 'sent' : 'received'
                         }`}>
                           {item.sender_id !== userData?.id && (
-                            <Avatar shape="circle" src={chatData.avatar} />
+                            <Avatar shape="circle" src={item.sender_avatar} />
                           )}
                           <div className="message-content">
                             <div className="message-text">{item.content}</div>

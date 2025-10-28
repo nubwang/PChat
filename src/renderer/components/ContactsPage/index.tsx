@@ -39,7 +39,7 @@ const ContactsPage: React.FC = () => {
     const data = localStorage.getItem("userData")
       ? JSON.parse(localStorage.getItem("userData"))
       : localStorage.getItem("userData");
-    sendMessage("init", { userId: data.id });
+    sendMessage("friendInit", { userId: data.id });
   }, [sendMessage]);
 
   // 只订阅一次，并在卸载时取消订阅
@@ -69,7 +69,7 @@ const ContactsPage: React.FC = () => {
     };
 
     getPendingFriend();
-    subscribe("init", handleInit);
+    subscribe("friendInit", handleInit);
 
     return () => {
       unsubscribe("init");

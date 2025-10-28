@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Avatar, Button, message, Drawer, Badge, Dropdown, Menu } from 'antd';
 import {
   UsergroupAddOutlined,
@@ -9,6 +9,7 @@ import {
   CrownOutlined,
 } from '@ant-design/icons';
 import './style.css';
+import { useSocket } from '../../../store/useSocket';
 
 interface GroupMember {
   id: string;
@@ -19,23 +20,26 @@ interface GroupMember {
 
 
 
-const DrawerGroup: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+const DrawerGroup: React.FC<{ open: boolean; onClose: () => void; chatData:any }> = ({ open, onClose, chatData }) => {
   // 群成员数据
-  const [groupMembers,setGroupMembers] = useState<GroupMember[]>([
-    { id: '1', name: '张三', avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960', isOwner: false },
-    { id: '2', name: '李四', avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960', isOwner: false },
-    { id: '3', name: '王五', avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960', isOwner: true },
-    { id: '4', name: '赵六', avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960', isOwner: false },
-  ]);
+  const [groupMembers,setGroupMembers] = useState<GroupMember[]>([]);
 
   // 群信息
-  const [groupInfo,setGroupInfo] = useState({
-    name: '前端开发交流群',
-    avatar: 'http://gips3.baidu.com/it/u=3886271102,3123389489&fm=3028&app=3028&f=JPEG&fmt=auto?w=1280&h=960',
-    description: '这是一个前端技术交流群',
-    memberCount: 28,
-    announcement: '今晚8点有React源码分享会，请准时参加！',
-  });
+  const [groupInfo,setGroupInfo] = useState({} as any);
+
+  const { sendMessage, subscribe } = useSocket();
+
+  useEffect(() => {
+    subscribe('groupMembers', (data: any) => {
+      console.log('Received group members-------1111111:', data);
+      if(data.code === 200){
+        let groupInfo = { ...data.groupInfo };
+        console.log(groupInfo,'groupInfogroupInfo------2222222')
+        setGroupInfo(groupInfo);
+        setGroupMembers(groupInfo.members || []);
+      }
+    });
+  }, []);
 
   // 退出群聊
   const handleExitGroup = () => {
@@ -51,10 +55,24 @@ const DrawerGroup: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
     <Drawer
       title={
         <div className="drawer-header">
-          <Avatar src={groupInfo.avatar} size={40} />
+          {
+            chatData.peer_type !== "group"?
+            <Avatar src={groupInfo.avatar_url} size={40}  shape="square" />
+            :
+            <div className="avatar-grid">
+              {groupMembers.slice(0, 9).map((item) => (
+                <Avatar
+                  shape="square"
+                  key={item.id}
+                  src={item.avatar}
+                  size={12}  // 调整头像大小
+                />
+              ))}
+            </div>
+          }
           <div className="group-info">
-            <h3>{groupInfo.name}</h3>
-            <p>{groupInfo.description}</p>
+            <h3 className='ellipsis'>{groupInfo.group_name}</h3>
+            <p>{groupInfo.announcement}</p>
           </div>
         </div>
       }
@@ -70,15 +88,8 @@ const DrawerGroup: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
       <div className="drawer-content">
         {/* 群公告 */}
         <div className="drawer-section">
-          <h4>
-            <Badge
-              // dot
-              // offset={[-5, 0]}
-              >
-              群公告
-            </Badge>
-          </h4>
-          <div className="announcement">{groupInfo.announcement}</div>
+          <h4> <Badge> 群公告 </Badge> </h4>
+          <div className="announcement">{groupInfo.announcement?groupInfo.announcement:"群主比较懒，还有写任何公告"}</div>
         </div>
 
         {/* 群成员 */}
@@ -92,13 +103,13 @@ const DrawerGroup: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
             </Button>
           </div>
           <div className="member-list">
-            {groupMembers.map(member => (
+            {groupMembers?.map(member => (
               <div key={member.id} className="member-item">
-                <Badge dot offset={[-5, 5]} color={member.isOwner ? 'gold' : 'green'}>
-                  <Avatar src={member.avatar} size="small" />
+                <Badge dot offset={[-5, 5]} color={member.role ? 'owner' : 'member'}>
+                  <Avatar src={member.avatar} size="small" shape="square" />
                 </Badge>
-                <span className="member-name">{member.name}</span>
-                {member.isOwner && <CrownOutlined className="owner-icon" />}
+                <span className="member-name">{member.username}</span>
+                {member.role === 'owner' && <CrownOutlined className="owner-icon" />}
               </div>
             ))}
           </div>

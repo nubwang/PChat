@@ -53,22 +53,18 @@ const ChatList: React.FC = () => {
   const onConfirm = useCallback((selectedUsers) => {
     console.log('创建群聊', selectedUsers);
       let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+      let avatar = selectedUsers.map((user)=>user.head_img).slice(0,9);
+      avatar.unshift(data.avatar);
+      let groupName = selectedUsers.map((user)=>user.username);
+      groupName.unshift(data.username);
       let groupData = {
         creatorId: data.id,
-        memberIds: selectedUsers,
+        memberIds: selectedUsers.map(user => user.user_id),
+        groupName: groupName.join(","),
+        avatar: JSON.stringify(avatar),
       }
-      // return false;
-      sendWithReconnect("createGroup", groupData, (response) => {
-        console.log('createGroup response:', response);
-        if(response.code === 200){
-          messageApi.success('群聊创建成功');
-          setTimeout(()=>{
-            init();
-          },500)
-        }else{
-          messageApi.error(response.message);
-        }
-      });
+      console.log('createGroup data:', groupData);
+      sendWithReconnect("createGroup", groupData);
   }, [sendWithReconnect, messageApi]);
 
   const init = useCallback(() => {
@@ -81,26 +77,72 @@ const ChatList: React.FC = () => {
   useEffect(() => {
     const subscriptions = subscribe("ConversationList", (res) => {
       console.log(res,'ConversationList')
-    if (res.code === 200) {
-      const data = res.data;
-      if (Array.isArray(data)) { // 确保数据有效性
-        setChatData(data);
-        if(contersionId){
-          const target = data.find(item =>
-            item.conversation_id === contersionId
-          );
-          if (target) {
-            setSelectedKey(target.conversation_id);
-            setChatWindowData(target);
+      if (res.code === 200) {
+        const data = res.data;
+        if (Array.isArray(data)) { // 确保数据有效性
+          setChatData(data);
+          if(contersionId){
+            const target = data.find(item =>
+              item.conversation_id === contersionId
+            );
+            if (target) {
+              setSelectedKey(target.conversation_id);
+              setChatWindowData(target);
+            }
           }
         }
+      } else {
+        messageApi.error(res.message); // 修正为 res.message
       }
-    } else {
-      messageApi.error(res.message); // 修正为 res.message
-    }
-  });
+    });
+
+    const subscriptions2 = subscribe("conversationInfo", (res) => {
+      console.log(res,'conversationInfo')
+      if (res.code === 200) {
+        const data = res.data;
+        if (data && data.conversation_id) { // 确保数据有效性
+          setChatData((prevChatData) =>{
+            let onoff = false;
+            let arr = prevChatData.map((item) =>{
+              if(item.conversation_id === data.conversation_id){
+                onoff = true;
+              }
+              return item.conversation_id === data.conversation_id ? { ...item, ...data } : item
+            })
+            if(!onoff){
+              arr.unshift(data);
+            }
+            console.log(arr,'arrarrarr')
+            return arr;
+          });
+        }
+      } else {
+        messageApi.error(res.message); // 修正为 res.message
+      }
+    });
+    //conversationActivated
+    const subscriptions3 = subscribe("conversationActivated", (res) => {
+      console.log(res,'conversationActivated')
+      if (res.code === 200) {
+        const data = res.data;
+        sendMessage('get_conversation_info', {conversationId: data.conversationId, userId: data.userId});
+      } else {
+        messageApi.error(res.message); // 修正为 res.message
+      }
+    });
+    // groupCreated
+    const subscriptions4 = subscribe("groupCreated", (res) => {
+      console.log(res,'groupCreated')
+      console.log({conversationId: res.conversationId, userId: slefInfo?.id},'slefInfoslefInfo')
+      if(res.code == 200){
+        sendMessage('get_conversation_info', {conversationId: res.conversationId, userId: slefInfo.id});
+      }
+    });
   return () => {
-    subscriptions?.unsubscribe()
+    subscriptions?.unsubscribe();
+    subscriptions2?.unsubscribe();
+    subscriptions3?.unsubscribe();
+    subscriptions4?.unsubscribe();
   };
   }, [isConnected,sendMessage,subscribe]);
 
@@ -128,6 +170,8 @@ const ChatList: React.FC = () => {
     dispatch(changeContersionId(item.conversation_id));
     setSelectedKey(item.conversation_id);
     setChatWindowData(item);
+    // activate_conversation
+    sendMessage("activate_conversation", { conversationId: item.conversation_id, userId: slefInfo.id });
   }
 
 
@@ -194,6 +238,7 @@ const ChatList: React.FC = () => {
         <Divider style={{ margin: '10px 0' }} />
 
         <List
+          style={{ flex: 1, overflowY: 'auto' }}
           itemLayout="horizontal"
           dataSource={chatData}
           renderItem={(item) => (
@@ -203,8 +248,22 @@ const ChatList: React.FC = () => {
               backgroundColor: selectedKey === item.conversation_id ? '#e2e2e2' : 'transparent',
             }}>
               <List.Item.Meta
-                avatar={<Avatar src={item.avatar} shape="square" />}
-                title={<span>{item.username}</span>}
+                avatar={
+                  item.peer_type === "group"?
+                  <div className="avatar-grid">
+                    {item.avatar&&JSON.parse(item.avatar).slice(0, 9).map((avatarUrl, index) => (
+                      <Avatar
+                        shape="square"
+                        key={index}
+                        src={avatarUrl}
+                        size={12}  // 调整头像大小
+                      />
+                    ))}
+                  </div>
+                  :
+                  <Avatar src={item.avatar} shape="square" />
+                }
+                title={item.username}
                 description={item.last_msg_content?item.last_msg_content:"暂无消息"}
                 onClick={() => {
                   listFn(item);

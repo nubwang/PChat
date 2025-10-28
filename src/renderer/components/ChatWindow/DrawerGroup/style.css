@@ -90,6 +90,23 @@
 .member-item:hover {
   background-color: var(--bg-color);
 }
+.ellipsis {
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏溢出内容 */
+  text-overflow: ellipsis;  /* 超出显示省略号 */
+  width: 200px;             /* 必须设置宽度 */
+}
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3列 */
+  grid-template-rows: repeat(3, 1fr);    /* 3行 */
+  gap: 0px;                              /* 头像间距 */
+  width: 36px;                          /* 容器宽度（3个头像 × 30px + 间隙） */
+  background-color: #f1f1f1;
+}
+.avatar-grid :where(.css-dev-only-do-not-override-36gkoj).ant-avatar.ant-avatar-square {
+  border-radius: 0px;
+}
 
 .member-name {
   font-size: 12px;

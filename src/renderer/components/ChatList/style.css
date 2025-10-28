@@ -40,7 +40,14 @@
   font-size: 12px;
   color: #999;
 }
+.ellipsis {
 
+}
+.ant-list-item-meta-title {
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏溢出内容 */
+  text-overflow: ellipsis;  /* 超出显示省略号 */
+}
 .unread-badge {
   display: inline-block;
   min-width: 18px;

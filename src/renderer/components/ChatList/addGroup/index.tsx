@@ -32,11 +32,14 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
 }, ref) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedUsersImg, setSelectedUsersImg] = useState<string[]>([]);
+  const [selectedUsersName, setSelectedUsersName] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [mockUsers, setMockUsers] = useState(mockUsersData);
 
   useEffect(() => {
     console.log('Fetching users from database...');
+    if(!isModalOpen) return;
     try {
       window.electronChat.db.getStatusFriends("accepted").then((data) => {
         console.log(data, '获取好友列表');
@@ -55,13 +58,14 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
     closeModal: () => setIsModalOpen(false),
   }));
 
-  const handleSelectUser = (userId: string) => {
-    console.log(userId,'userId')
+  const handleSelectUser = (user: string) => {
+    console.log(user,'userId')
     setSelectedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
+      prev.includes(user.user_id)
+        ? prev.filter(item => item.user_id !== user.user_id)
+        : [...prev, user]
     );
+
   };
 
   const handleConfirm = () => {
@@ -75,6 +79,10 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
   const filteredUsers = mockUsers?.filter?.(user =>
     user?.username?.toLowerCase().includes(searchValue?.toLowerCase())
   );
+
+  useEffect(() => {
+    setSelectedUsers([]);
+  }, [isModalOpen]);
 
   return (
     <Modal
@@ -102,8 +110,8 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
           <div className="group-creator-selected-users">
             <div className="group-creator-section-title">已选成员 ({selectedUsers.length})</div>
             <div className="group-creator-avatar-list">
-              {selectedUsers.map(userId => {
-                const user = mockUsers.find(u => u.user_id === userId);
+              {selectedUsers.map(item => {
+                const user = mockUsers.find(u => u.user_id === item.user_id);
                 return user ? (
                   <Tooltip title={user.name} key={user.user_id}>
                     <Avatar
@@ -127,7 +135,7 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
             renderItem={(user) => (
               <List.Item
                 className="group-creator-contact-item"
-                onClick={() => handleSelectUser(user.user_id)}
+                onClick={() => handleSelectUser(user)}
               >
                 <div className="group-creator-contact-info">
                   <Avatar src={user.head_img} className="group-creator-selectable-avatar" />
