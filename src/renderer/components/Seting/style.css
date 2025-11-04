@@ -1,6 +1,68 @@
 .settings-content {
-  padding: 20px;
+  padding: 24px;
   background-color: #f0f2f5;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.account-card {
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1890ff;
+}
+
+.profile-section {
+  display: flex;
+  padding: 24px;
+}
+
+.avatar-container {
+  margin-right: 48px;
+}
+
+.username {
+  margin-top: 16px;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.85);
+  text-align: center;
+}
+
+.user-form {
+  flex: 1;
+}
+
+.settings-tabs {
+  min-width: 500px;
+}
+
+.ant-form-item {
+  margin-bottom: 18px;
+}
+
+.error-message {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.logout-btn {
+  width: 200px;
+  height: 44px;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-top: 24px;
+}
+
+.ant-input-affix-wrapper {
+  border-radius: 6px;
+}
+
+.ant-btn-primary {
+  border-radius: 6px;
+  font-weight: 500;
 }

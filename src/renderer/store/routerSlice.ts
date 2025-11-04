@@ -10,6 +10,7 @@ interface RouterState {
   messageList: any[]; // 消息列表
   hasMore: boolean; // 是否有更多消息
   page: number; // 当前页码
+  userData: any; // 用户数据
 }
 
 const initialState: RouterState = {
@@ -20,12 +21,16 @@ const initialState: RouterState = {
   messageList: [],
   hasMore: true,
   page: 0,
+  userData: null,
 };
 
 export const routerSlice = createSlice({
   name: 'router',
   initialState,
   reducers: {
+    initUser: (state, action: PayloadAction<any>) => {
+      state.userData = action.payload;
+    },
     setCurrentPath: (state, action: PayloadAction<string>) => {
       state.previousPath = state.currentPath;
       state.currentPath = action.payload;
@@ -48,5 +53,5 @@ export const routerSlice = createSlice({
   },
 });
 
-export const { setCurrentPath,changeTab,changeContersionId,changePage,pushMessageList,changeHasMore } = routerSlice.actions;
+export const { setCurrentPath,changeTab,changeContersionId,changePage,pushMessageList,changeHasMore,initUser } = routerSlice.actions;
 export default routerSlice.reducer;

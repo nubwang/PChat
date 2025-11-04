@@ -6,7 +6,7 @@ import routes from './routes'
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Provider, useDispatch,useSelector } from 'react-redux';
 import { store,RootState } from './store';
-import { setCurrentPath } from './store/routerSlice';
+import { setCurrentPath,initUser } from './store/routerSlice';
 import { useSocket } from './store/useSocket';
 
 
@@ -18,6 +18,7 @@ const RouteListener = () => {
 
   useEffect(() => {
       dispatch(setCurrentPath(location.pathname));
+      dispatch(initUser(JSON.parse(localStorage.getItem("userData") || '{}')));
     }, [location]);
     return null; // 无UI组件
 };

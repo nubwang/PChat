@@ -1,20 +1,21 @@
+//api/index.ts
 import axios from 'axios'
 // import { store } from '../../renderer/store';
 export const navigateTo = (
-  path: string, 
+  path: string,
   action: 'push' | 'replace' = 'push',
   params?: Record<string, string> // 可选：携带路由参数
 ) => {
   // 开发环境打印调试信息
   console.log('[Navigation]', { path, action, params });
-  
+
   if (window.electronAPI) {
     // Electron 环境：通过 IPC 跳转
     window.electronAPI.navigate(path, action);
   } else {
     // 非 Electron 环境（如浏览器）
     const hashPath = `#${path}${params ? '?' + new URLSearchParams(params).toString() : ''}`;
-    
+
     if (action === 'replace') {
       window.location.replace(hashPath); // 替换当前历史记录
     } else {
@@ -39,6 +40,8 @@ const apiList = {
     friends_pending: 'friends/:userId/pending',
     friends_accept: 'friends/accept',
     friends_reject: 'friends/reject',
+    updateUser: 'user/updateUser',
+    upload: 'user/upload'
 }
 
 // export const apiUrl = (x:apiType) => {
