@@ -25,10 +25,10 @@ contextBridge.exposeInMainWorld('electronChat', {
       ipcRenderer.invoke('db:get-user-by-id', id),
 
     // 会话表  db:get-conversation-all
-    getConversationAll: (id) =>
+    getConversationAll: () =>
       ipcRenderer.invoke('db:get-conversation-all'),
-    addConversation: (conversation_id, user_id, peer_type, peer_id, localstrongID) =>
-      ipcRenderer.invoke('db:add-conversation',conversation_id, user_id, peer_type, peer_id,localstrongID),
+    addConversation: (conversations) =>
+      ipcRenderer.invoke('db:add-conversation',conversations),
 
     // 消息表
     addMessage: (msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size) =>

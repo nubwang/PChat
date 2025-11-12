@@ -35,6 +35,10 @@ class ChatDatabase {
   initSchema() {
     // 启用外键约束
     this.db.pragma("foreign_keys = ON");
+    // this.db.prepare('DROP TABLE IF EXISTS conversations').run();
+    //SELECT * FROM conversations ORDER BY updated_at DESC
+
+    // console.log(this.db.prepare(` SELECT * FROM conversations ORDER BY updated_at DESC; `).all())
 
     // 创建好友表
     this.db.exec(`
@@ -67,17 +71,30 @@ class ChatDatabase {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS conversations (
         conversation_id INTEGER PRIMARY KEY,
-        user_id INTEGER NOT NULL,  -- 这里存储的是当前用户的ID（冗余字段，便于查询）
+        user_id INTEGER NOT NULL,  -- 当前用户
         peer_type TEXT CHECK(peer_type IN ('user', 'group')) NOT NULL,
         peer_id INTEGER NOT NULL,
+
+        -- 消息相关字段
         last_msg_id INTEGER,
         last_msg_content TEXT,
         last_msg_time TEXT DEFAULT (datetime('now')),
+
+        -- 状态字段
         unread_count INTEGER DEFAULT 0,
         is_top INTEGER DEFAULT 0 CHECK(is_top IN (0, 1)),
         is_mute INTEGER DEFAULT 0 CHECK(is_mute IN (0, 1)),
+
+        -- 元数据字段
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now')),
+        group_name TEXT,
+        group_avatar TEXT,
+        avatar TEXT,  -- 头像数组
+        nickname TEXT,  -- 对方昵称
+        username TEXT,  -- 群成员用户名列表
+
+        -- 唯一约束（避免重复会话）
         UNIQUE (user_id, peer_type, peer_id)
       )
     `);
@@ -241,44 +258,95 @@ class ChatDatabase {
   }
 
   // 会话相关方法
-  addConversation(conversation_id, user_id, peer_type, peer_id, localstrongID) {
+
+  addConversation(conversations) {
     if (!this.db) return "Database not initialized for user";
+    if (!conversations?.length) return true;
 
-    let stmt;
-    // 验证conversation_id是否已经存在
-    if (peer_type === 'user') {
-      const existing = this.db.prepare(`
-        SELECT * FROM conversations
-        WHERE conversation_id = ?
-      `).get(conversation_id);
-
-      if (existing) {
-        // 更新unread_count和updated_at字段
-        existing.unread_count = 0;
-        existing.updated_at = new Date().toISOString();
-        const updateStmt = this.db.prepare(`
-          UPDATE conversations
-          SET unread_count = ?, updated_at = ?
-          WHERE conversation_id = ?
-        `);
-        updateStmt.run(existing.unread_count, existing.updated_at, conversation_id);
-        return existing;
-      } else {
-        stmt = this.db.prepare(`
-          INSERT INTO conversations
-            (conversation_id, user_id, peer_type, peer_id)
-          VALUES (?, ?, ?, ?)
-        `);
-      }
-    } else {
-      stmt = this.db.prepare(`
-        INSERT INTO conversations
-          (conversation_id, user_id, peer_type, peer_id)
-        VALUES (?, ?, ?, ?)
+    try {
+      // 1. 创建临时表（精确复制结构）
+      this.db.exec(`
+        CREATE TEMP TABLE IF NOT EXISTS temp_conversations (
+          conversation_id INTEGER PRIMARY KEY,
+          user_id INTEGER NOT NULL,
+          peer_type TEXT NOT NULL,
+          peer_id INTEGER NOT NULL,
+          last_msg_id INTEGER,
+          last_msg_content TEXT,
+          last_msg_time TEXT,
+          unread_count INTEGER,
+          is_top INTEGER,
+          is_mute INTEGER,
+          created_at TEXT,
+          updated_at TEXT,
+          group_name TEXT,
+          group_avatar TEXT,
+          avatar TEXT,
+          nickname TEXT,
+          username TEXT
+        );
       `);
-    }
 
-    return stmt.run(conversation_id, user_id, peer_type, peer_id);
+      // 2. 清空临时表（确保干净状态）
+      this.db.exec("DELETE FROM temp_conversations;");
+
+      // 3. 准备插入语句（只需准备一次）
+      const insertStmt = this.db.prepare(`
+        INSERT INTO temp_conversations VALUES (
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+      `);
+
+      // 4. 智能分批插入（每批30条）
+      const batchSize = 30;
+      for (let i = 0; i < conversations.length; i++) {
+        const conv = conversations[i];
+
+        // 直接运行预处理语句，不需要finalize
+        insertStmt.run(
+          conv.conversation_id,
+          conv.user_id,
+          conv.peer_type,
+          conv.peer_id,
+          conv.last_msg_id || null,
+          conv.last_msg_content || null,
+          conv.last_msg_time || new Date().toISOString(),
+          conv.unread_count || 0,
+          conv.is_top ? 1 : 0,
+          conv.is_mute ? 1 : 0,
+          conv.created_at || new Date().toISOString(),
+          conv.updated_at || new Date().toISOString(),
+          conv.group_name || null,
+          conv.group_avatar ? JSON.stringify(conv.group_avatar) : null,
+          conv.avatar || null,
+          conv.nickname || null,
+          conv.username || null
+        );
+
+        // 每处理完一个批次可以打印日志（可选）
+        if (i > 0 && i % batchSize === 0 && process.env.NODE_ENV === 'development') {
+          console.log(`已处理 ${i}/${conversations.length} 条会话`);
+        }
+      }
+
+      // 5. 原子替换数据
+      this.db.exec(`
+        DELETE FROM conversations;
+        INSERT OR REPLACE INTO conversations
+        SELECT * FROM temp_conversations;
+      `);
+
+      // 6. 清理临时表
+      this.db.exec("DROP TABLE temp_conversations;");
+
+      // 验证结果
+      const inserted = this.db.prepare("SELECT * FROM conversations").all();
+      console.log(`成功插入会话数量: ${inserted.length}`);
+      return true;
+    } catch (error) {
+      console.error("替换会话数据失败:", error);
+      return false;
+    }
   }
 
   getConversationAll() {

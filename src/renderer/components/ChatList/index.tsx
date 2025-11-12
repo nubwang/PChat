@@ -1,6 +1,6 @@
-import React, { useState,useEffect, useMemo, useCallback,useRef } from 'react';
-import { Input, List, Avatar, Button, Modal,Search, Divider, Typography, Empty, message, Dropdown } from 'antd';
-import { SearchOutlined,UserAddOutlined,UnorderedListOutlined,UserOutlined,FileAddOutlined } from '@ant-design/icons';
+import React, { useState,useEffect, useMemo, useCallback,useRef, use } from 'react';
+import { Input, List, Avatar, Button, Modal,Search, Divider, Typography, Empty, message, Dropdown, Card } from 'antd';
+import { SearchOutlined,UserAddOutlined,UnorderedListOutlined,UserOutlined,FileAddOutlined,ExclamationCircleFilled } from '@ant-design/icons';
 import './style.css';
 import ChatWindow from '../ChatWindow';
 import { api } from "../../../static/api";
@@ -10,7 +10,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { formatChatTime } from '../../../utils/timeConversion';
 import { useDispatch } from 'react-redux';
-import { changeContersionId } from '../../store/routerSlice';
+import { changeContersionId, setChatData, updateConversation } from '../../store/routerSlice';
 import type { MenuProps } from 'antd';
 import AddFriend from "./addFriend";
 import AddGroup from "./addGroup";
@@ -32,26 +32,45 @@ const ChatList: React.FC = () => {
 
 
   const navigate = useNavigate();
-  const { sendMessage,subscribe,connectSocket,sendWithReconnect } = useSocket();
-  const [chatData, setChatData] = useState([]);
+  const { sendMessage,subscribe,connectSocket,sendWithReconnect,reconnectSocket } = useSocket();
   const [chatWindowData, setChatWindowData] = useState(null);
   const [selectedKey, setSelectedKey] = useState(null);
   const { Conversation } = location.state || {};
   const { isConnected } = useSelector( (state: RootState) => state.socket );
-  const { contersionId } = useSelector( (state: RootState) => state.router );
+  const { contersionId, chatData } = useSelector( (state: RootState) => state.router );
   const groupRef = useRef<{ openModal: () => void; closeModal: () => void }>(null);
+  //useRef
+  const isMounted = useRef(false);
   // 修改后的 useEffect 逻辑
   useEffect(() => {
-    console.log(isConnected,'isConnected')
-    if (isConnected) {
-      setTimeout(()=>{
-        init();
-      },500)
+    if (isConnected && !isMounted.current) {
+      window.electronChat.db.getConversationAll().then((data)=>{
+        isMounted.current = true;
+        dispatch(setChatData(data));
+        let timer = setTimeout(()=>{
+          init();
+        },500)
+      })
     }
-  }, [isConnected,sendMessage]); // 仅依赖 Conversation
+    return ()=>{
+      timer = null;
+      isMounted.current = false;
+    }
+  }, [isConnected]); // 仅依赖 Conversation
+
+  useEffect(() => {
+    if(contersionId){
+      const target = chatData.find(item =>
+        item.conversation_id === contersionId
+      );
+      if (target) {
+        setSelectedKey(target.conversation_id);
+        setChatWindowData(target);
+      }
+    }
+  }, [chatData]);
 
   const onConfirm = useCallback((selectedUsers) => {
-    console.log('创建群聊', selectedUsers);
       let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
       let avatar = selectedUsers.map((user)=>user.head_img).slice(0,9);
       avatar.unshift(data.avatar);
@@ -63,33 +82,23 @@ const ChatList: React.FC = () => {
         groupName: groupName.join(","),
         avatar: JSON.stringify(avatar),
       }
-      console.log('createGroup data:', groupData);
       sendWithReconnect("createGroup", groupData);
   }, [sendWithReconnect, messageApi]);
 
   const init = useCallback(() => {
     let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : null;
     if (!data?.id) return;
-    console.log(data, 'userData----1111');
     sendMessage("getConversationList", { userId: data.id });
   }, [isConnected, sendMessage, onConfirm]);
 
   useEffect(() => {
     const subscriptions = subscribe("ConversationList", (res) => {
-      console.log(res,'ConversationList')
+      console.log(5)
       if (res.code === 200) {
         const data = res.data;
         if (Array.isArray(data)) { // 确保数据有效性
-          setChatData(data);
-          if(contersionId){
-            const target = data.find(item =>
-              item.conversation_id === contersionId
-            );
-            if (target) {
-              setSelectedKey(target.conversation_id);
-              setChatWindowData(target);
-            }
-          }
+          dispatch(setChatData(data));
+          window.electronChat.db.addConversation(data);
         }
       } else {
         messageApi.error(res.message); // 修正为 res.message
@@ -97,32 +106,18 @@ const ChatList: React.FC = () => {
     });
 
     const subscriptions2 = subscribe("conversationInfo", (res) => {
-      console.log(res,'conversationInfo')
+      console.log(4)
       if (res.code === 200) {
         const data = res.data;
-        if (data && data.conversation_id) { // 确保数据有效性
-          setChatData((prevChatData) =>{
-            let onoff = false;
-            let arr = prevChatData.map((item) =>{
-              if(item.conversation_id === data.conversation_id){
-                onoff = true;
-              }
-              return item.conversation_id === data.conversation_id ? { ...item, ...data } : item
-            })
-            if(!onoff){
-              arr.unshift(data);
-            }
-            console.log(arr,'arrarrarr')
-            return arr;
-          });
-        }
+        console.log(data,'0000000000000000000')
+        dispatch(updateConversation(data));
       } else {
         messageApi.error(res.message); // 修正为 res.message
       }
     });
     //conversationActivated
     const subscriptions3 = subscribe("conversationActivated", (res) => {
-      console.log(res,'conversationActivated')
+      console.log(2)
       if (res.code === 200) {
         const data = res.data;
         sendMessage('get_conversation_info', {conversationId: data.conversationId, userId: data.userId});
@@ -132,8 +127,7 @@ const ChatList: React.FC = () => {
     });
     // groupCreated
     const subscriptions4 = subscribe("groupCreated", (res) => {
-      console.log(res,'groupCreated')
-      console.log({conversationId: res.conversationId, userId: slefInfo?.id},'slefInfoslefInfo')
+      console.log(3)
       if(res.code == 200){
         sendMessage('get_conversation_info', {conversationId: res.conversationId, userId: slefInfo.id});
       }
@@ -161,12 +155,17 @@ const ChatList: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  const reOnline = useCallback(()=>{
+    reconnectSocket()
+  },[reconnectSocket])
+
 
 
   const actionItems = [
     { label: '发消息', action: () => message.info('开始聊天') },
   ];
   const listFn = (item)=>{
+    console.log(1,chatData)
     dispatch(changeContersionId(item.conversation_id));
     setSelectedKey(item.conversation_id);
     setChatWindowData(item);
@@ -198,7 +197,6 @@ const ChatList: React.FC = () => {
       key: '1',
       label: (
         <div onClick={()=>{
-          console.log(groupRef, 'groupRef');
           groupRef.current?.openModal();
         }}>
           <FileAddOutlined />
@@ -218,7 +216,7 @@ const ChatList: React.FC = () => {
   ];
 
   return (
-    <div className="slef-container">
+    <div className="slef-container" ref={isMounted}>
       <div className="chat-list-container">
         {contextHolder}
         <div className="search-bar custom-title-bar">
@@ -235,7 +233,13 @@ const ChatList: React.FC = () => {
         </div>
         <AddFriend isModalOpen={isModalOpen} handleCancel={handleCancel} isConnected={isConnected} />
         <AddGroup ref={groupRef} onConfirm={onConfirm}/>
-        <Divider style={{ margin: '10px 0' }} />
+        {/* <Divider style={{ margin: '10px 0' }} /> */}
+        {
+          isConnected?
+          null
+          :
+          <p className='offline' onClick={reOnline}><ExclamationCircleFilled style={{color: "#F22E0F"}} />&nbsp;&nbsp;网络已断开，检查网络后，点击重新</p>
+        }
 
         <List
           style={{ flex: 1, overflowY: 'auto' }}
@@ -251,7 +255,7 @@ const ChatList: React.FC = () => {
                 avatar={
                   item.peer_type === "group"?
                   <div className="avatar-grid">
-                    {item.avatar&&JSON.parse(item.avatar).slice(0, 9).map((avatarUrl, index) => (
+                    {item.avatar&&JSON.parse(item.avatar || "{}").slice(0, 9).map((avatarUrl, index) => (
                       <Avatar
                         shape="square"
                         key={index}

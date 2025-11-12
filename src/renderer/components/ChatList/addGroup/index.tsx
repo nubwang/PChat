@@ -38,7 +38,7 @@ const AddGroupModal = forwardRef<AddGroupRef, AddGroupProps>(({
   const [mockUsers, setMockUsers] = useState(mockUsersData);
 
   useEffect(() => {
-    console.log('Fetching users from database...');
+    console.log('Fetching users from database...',isModalOpen);
     if(!isModalOpen) return;
     try {
       window.electronChat.db.getStatusFriends("accepted").then((data) => {

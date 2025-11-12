@@ -76,3 +76,12 @@
 :where(.css-dev-only-do-not-override-36gkoj).ant-modal .ant-modal-header {
   background-color: transparent;
 }
+.offline {
+  /* 一下用常见字体 */
+  margin-top: -10px;
+  font-size: 12px;
+  line-height: 30px;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+  background-color: #F5CDC6;
+}

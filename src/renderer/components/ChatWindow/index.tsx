@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Avatar, Input, Button, message, Empty, List, Spin, Drawer } from 'antd';
+import { Avatar, Input, Button, message, Empty, List, Spin, Drawer, Image } from 'antd';
 import {
   SmileOutlined,
   PaperClipOutlined,
   AudioOutlined,
   SendOutlined,
-  EllipsisOutlined
+  EllipsisOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
 import './style.css';
 import { useSocket } from '../../store/useSocket';
 import DrawerGroup from './DrawerGroup';
-import { on } from 'events';
 
 const { TextArea } = Input;
 
@@ -28,6 +28,13 @@ interface ChatData {
   peer_type: string;
   peer_id: string;
   name?: string;
+}
+
+interface FilePreview {
+  id: string;
+  file: File;
+  url: string;
+  type: string;
 }
 
 function debounce<T extends (...args: any[]) => any>(
@@ -50,17 +57,20 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
   const [userData, setUserData] = useState<any>(null);
   const [open, setOpen] = useState(false);
   const [conversationId, setConversationId] = useState(chatData?.conversation_id || '');
+  const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   // Socket 连接
   const { sendMessage, subscribe } = useSocket();
 
   // 消息订阅（优化内存管理）
   useEffect(() => {
-    console.log(chatData,'chatData')
     setMessages([]);
     setPage(0);
     setIsLoadingHistory(true);
@@ -73,7 +83,6 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     const handleNewMessage = (data: any) => {
       if (data.code === 200) {
         let newData = data.data;
-        console.log(data, 'newMessage2222',newData.conversation_id, userData.id);
         sendMessage('get_conversation_info', {conversationId: newData.conversation_id, userId: userData.id});
         newData.sender_avatar = userData.avatar;
         setMessages(prev => [...prev, newData]);
@@ -113,7 +122,6 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
 
   useEffect(() => {
     const handleNewMessage = (data: any) => {
-      console.log(data, 'conversationMessages');
       if (data.code === 200) {
         let newData = data.messages;
         if (newData && newData.length > 0) {
@@ -160,33 +168,131 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     [loadHistoryMessages]
   );
 
-  // 发送消息（优化参数处理）
+  // 处理文件选择
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
+
+    const newFiles: FilePreview[] = [];
+    
+    Array.from(files).forEach(file => {
+      // 检查文件类型
+      if (file.type.startsWith('image/')) {
+        const id = Math.random().toString(36).substr(2, 9);
+        const url = URL.createObjectURL(file);
+        newFiles.push({
+          id,
+          file,
+          url,
+          type: 'image'
+        });
+      } else {
+        message.warning(`不支持的文件类型: ${file.type}`);
+      }
+    });
+
+    setFilePreviews(prev => [...prev, ...newFiles]);
+  };
+
+  // 处理文件输入变化
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files);
+    // 重置input，允许选择相同文件
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
+  // 移除预览文件
+  const removePreviewFile = (id: string) => {
+    setFilePreviews(prev => {
+      const fileToRemove = prev.find(f => f.id === id);
+      if (fileToRemove) {
+        URL.revokeObjectURL(fileToRemove.url);
+      }
+      return prev.filter(f => f.id !== id);
+    });
+  };
+
+  // 发送消息（支持文字和图片）
   const handleSendMessage = useCallback(() => {
-    if (!inputValue.trim() || !chatData) return;
+    if ((!inputValue.trim() && filePreviews.length === 0) || !chatData) return;
+    
     let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : localStorage.getItem("userData");
 
-    const params = {
-      conversation_id: chatData.conversation_id,
-      sender_id: data.id,
-      sender_avatar: data.avatar,
-      sender_name: data.username,
-      receiver_type: chatData.peer_type,
-      receiver_id: chatData.peer_id === data.id ? chatData.user_id : chatData.peer_id,
-      content_type: 'text',
-      content: inputValue.trim(),
-    };
+    // 如果有文件，先发送文件
+    if (filePreviews.length > 0) {
+      filePreviews.forEach(filePreview => {
+        // 这里需要根据你的后端API调整文件上传逻辑
+        const formData = new FormData();
+        formData.append('file', filePreview.file);
+        formData.append('conversation_id', chatData.conversation_id);
+        formData.append('sender_id', data.id);
+        formData.append('sender_avatar', data.avatar);
+        formData.append('sender_name', data.username);
+        formData.append('receiver_type', chatData.peer_type);
+        formData.append('receiver_id', chatData.peer_id === data.id ? chatData.user_id : chatData.peer_id);
+        formData.append('content_type', 'image');
+        
+        // 调用文件上传API
+        sendMessage('uploadFile', formData);
+      });
+    }
 
-    sendMessage('sendMessage', params);
+    // 发送文字消息
+    if (inputValue.trim()) {
+      const params = {
+        conversation_id: chatData.conversation_id,
+        sender_id: data.id,
+        sender_avatar: data.avatar,
+        sender_name: data.username,
+        receiver_type: chatData.peer_type,
+        receiver_id: chatData.peer_id === data.id ? chatData.user_id : chatData.peer_id,
+        content_type: 'text',
+        content: inputValue.trim(),
+      };
+
+      sendMessage('sendMessage', params);
+    }
+
+    // 清空输入和预览
     setInputValue('');
-  }, [inputValue, chatData, sendMessage]);
+    setFilePreviews([]);
+  }, [inputValue, chatData, sendMessage, filePreviews]);
+
+  // 拖拽事件处理
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    handleFileSelect(files);
+  };
+
+  // 点击附件按钮
+  const handleAttachmentClick = () => {
+    fileInputRef.current?.click();
+  };
 
   useEffect(() => {
     if (messageContainerRef.current?.scrollTop !== 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages]);
+  
   useEffect(() => {
-    console.log(1, 'messages changed');
     const observer = new MutationObserver(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
     });
@@ -197,11 +303,10 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     return () => observer.disconnect();
   }, [chatData]);
 
-
   const showDrawer = () => {
-    //利用onoff控制第二次点击关闭抽屉
     setOpen(open => !open);
   };
+  
   const onClose = () => {
     setOpen(false);
   };
@@ -276,10 +381,42 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="input-area">
+            {/* 文件预览区域 */}
+            {filePreviews.length > 0 && (
+              <div className="file-previews">
+                {filePreviews.map(file => (
+                  <div key={file.id} className="file-preview-item">
+                    <Image
+                      width={60}
+                      height={60}
+                      src={file.url}
+                      alt="预览"
+                      style={{ objectFit: 'cover', borderRadius: 4 }}
+                      preview={{
+                        mask: null
+                      }}
+                    />
+                    <Button
+                      type="text"
+                      icon={<CloseOutlined />}
+                      className="remove-file-btn"
+                      onClick={() => removePreviewFile(file.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div 
+              className={`input-area ${isDragging ? 'drag-over' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              ref={dropZoneRef}
+            >
               <div className="input-tools">
                 <SmileOutlined />
-                <PaperClipOutlined />
+                <PaperClipOutlined onClick={handleAttachmentClick} style={{ cursor: 'pointer' }} />
                 <AudioOutlined />
               </div>
               <div className="inputBox">
@@ -287,17 +424,38 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                   className="inputIN"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="输入消息"
+                  placeholder="输入消息，或拖拽图片到此区域"
                   autoSize={{ minRows: 3, maxRows: 6 }}
                   onPressEnter={(e) => {
-                    e.preventDefault();
-                    handleSendMessage();
-                    (e.target as HTMLTextAreaElement).focus();
+                    if (!e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
                   }}
                 />
               </div>
+              {/* <div className="send-button-container">
+                <Button 
+                  type="primary" 
+                  icon={<SendOutlined />} 
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() && filePreviews.length === 0}
+                >
+                  发送
+                </Button>
+              </div> */}
             </div>
           </div>
+
+          {/* 隐藏的文件输入 */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            multiple
+            accept="image/*"
+            onChange={handleFileInputChange}
+          />
         </div>
       ) : (
         <div className="noChatData">

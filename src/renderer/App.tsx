@@ -53,10 +53,14 @@ function AppContent() {
       }
     });
     // 连接 Socket
-    connectSocket().catch(err => {
+    connectSocket().then((res)=>{
+      console.log(res,"connectSocketconnectSocketconnectSocketconnectSocketconnectSocket")
+      if(res.payload){
+        let userData = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData") || '{}'):{};
+        sendMessage("init", { userId: userData.id });
+      }
+    }).catch(err => {
       console.error('Failed to connect:', err);
-      // let userData = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData") || '{}'):{};
-      // sendMessage("init", { userId: userData.id });
     });
     // 清理逻辑可在 useSocket 内部处理
   }, [initializeSocket, connectSocket, token]);

@@ -187,8 +187,8 @@ ipcMain.handle('db:get-conversation-all', (event) => {
   return db.getConversationAll();
 });
 
-ipcMain.handle('db:add-conversation', (event, conversation_id,user_id, peer_type, peer_id, localstrongID) => {
-  return db.addConversation(conversation_id,user_id, peer_type, peer_id, localstrongID);
+ipcMain.handle('db:add-conversation', (event, conversations) => {
+  return db.addConversation(conversations);
 });
 
 ipcMain.handle('db:add-message', (event, msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size) => {
