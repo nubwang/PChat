@@ -31,10 +31,12 @@ contextBridge.exposeInMainWorld('electronChat', {
       ipcRenderer.invoke('db:add-conversation',conversations),
 
     // 消息表
-    addMessage: (msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size) =>
-      ipcRenderer.invoke('db:add-message',msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size),
-    getMessagesByConversation: (conversation_id, limit, offset) =>
-      ipcRenderer.invoke('db:get-messages-by-conversation',conversation_id, limit, offset),
+    addMessage: (messageParams) =>
+      ipcRenderer.invoke('db:add-message', messageParams),
+    getMessages: (conversation_id, options) =>
+      ipcRenderer.invoke('db:get-messages',conversation_id, options),
+    addMessageAll: (messages) =>
+      ipcRenderer.invoke('db:add-message-all',messages),
     login: (userId) =>
       ipcRenderer.invoke('login', { userId }),
     logout: () =>

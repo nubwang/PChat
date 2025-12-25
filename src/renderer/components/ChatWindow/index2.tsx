@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, use } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Avatar, Input, Button, message, Empty, List, Spin, Drawer, Image } from 'antd';
 import {
   SmileOutlined,
@@ -15,7 +15,6 @@ import { useDispatch } from 'react-redux';
 import { messagesData } from '../../store/routerSlice';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { formatISOToDateTime, formatChatTime } from '../../../static/utils/time';
 
 const { TextArea } = Input;
 
@@ -24,7 +23,13 @@ interface Message {
   id: string | number;
   content: string;
   create_time: string;
+  timestamp: string;
   sender_id: string | number;
+  sender_avatar: string;
+  content_type: string;
+  receiver_id: string | number;
+  receiver_type: string;
+  sender_name?: string;
 }
 
 interface ChatData {
@@ -32,7 +37,7 @@ interface ChatData {
   user_id: string;
   peer_type: string;
   peer_id: string;
-  name?: string;
+  username?: string;
 }
 
 interface FilePreview {
@@ -56,47 +61,47 @@ function debounce<T extends (...args: any[]) => any>(
 // 智能时间格式化函数
 const formatMessageTime = (timestamp: string, prevTimestamp?: string): string => {
   if (!timestamp) return '';
-
+  
   const current = new Date(timestamp);
   const now = new Date();
   const prev = prevTimestamp ? new Date(prevTimestamp) : null;
-
+  
   // 如果和上一条消息在同一分钟内，不显示时间
   if (prev && Math.abs(current.getTime() - prev.getTime()) < 60000) {
     return '';
   }
-
+  
   const isToday = current.toDateString() === now.toDateString();
   const isYesterday = new Date(now.getTime() - 86400000).toDateString() === current.toDateString();
   const isThisYear = current.getFullYear() === now.getFullYear();
-
+  
   if (isToday) {
     // 今天：显示时间
-    return current.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
+    return current.toLocaleTimeString('zh-CN', { 
+      hour: '2-digit', 
       minute: '2-digit',
-      hour12: false
+      hour12: false 
     });
   } else if (isYesterday) {
     // 昨天：显示 昨天 + 时间
-    return `昨天 ${current.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
+    return `昨天 ${current.toLocaleTimeString('zh-CN', { 
+      hour: '2-digit', 
       minute: '2-digit',
-      hour12: false
+      hour12: false 
     })}`;
   } else if (isThisYear) {
     // 今年：显示 月-日 + 时间
-    return `${current.getMonth() + 1}-${current.getDate()} ${current.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
+    return `${current.getMonth() + 1}-${current.getDate()} ${current.toLocaleTimeString('zh-CN', { 
+      hour: '2-digit', 
       minute: '2-digit',
-      hour12: false
+      hour12: false 
     })}`;
   } else {
     // 跨年：显示 年-月-日 + 时间
-    return `${current.getFullYear()}-${current.getMonth() + 1}-${current.getDate()} ${current.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
+    return `${current.getFullYear()}-${current.getMonth() + 1}-${current.getDate()} ${current.toLocaleTimeString('zh-CN', { 
+      hour: '2-digit', 
       minute: '2-digit',
-      hour12: false
+      hour12: false 
     })}`;
   }
 };
@@ -104,11 +109,11 @@ const formatMessageTime = (timestamp: string, prevTimestamp?: string): string =>
 // 检查是否需要显示时间分隔符（5分钟间隔）
 const shouldShowTimeDivider = (currentTime: string, prevTime?: string): boolean => {
   if (!prevTime) return true;
-
+  
   const current = new Date(currentTime);
   const prev = new Date(prevTime);
   const diffInMinutes = (current.getTime() - prev.getTime()) / (1000 * 60);
-
+  
   return diffInMinutes >= 5;
 };
 
@@ -116,23 +121,20 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
   // 状态管理
   const dispatch = useDispatch();
   const [inputValue, setInputValue] = useState('');
-  // const [messages, setMessages] = useState<Message[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(-1);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [conversationId, setConversationId] = useState(chatData?.conversation_id || '');
   const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const { messages } = useSelector( (state: RootState) => state.router );
+  const { messages } = useSelector((state: RootState) => state.router);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
-  const onoff = useRef<HTMLDivElement>(false);
   const isSendingRef = useRef(false);
   const isLoadingRef = useRef(false);
   const currentChatIdRef = useRef<string>('');
@@ -145,7 +147,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     if (!chatData) return;
 
     console.log(chatData, 'chatData__________初始化聊天');
-
+    
     // 重置状态
     setPage(0);
     setIsLoadingHistory(true);
@@ -154,12 +156,12 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     isSendingRef.current = false;
     isLoadingRef.current = false;
     scrollLockRef.current = false;
-
+    
     // 更新当前聊天ID引用
     currentChatIdRef.current = chatData.conversation_id;
 
-    const userData = localStorage.getItem("userData")
-      ? JSON.parse(localStorage.getItem("userData")!)
+    const userData = localStorage.getItem("userData") 
+      ? JSON.parse(localStorage.getItem("userData")!) 
       : null;
     setUserData(userData);
 
@@ -175,45 +177,34 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     if (!chatData?.conversation_id || isLoadingRef.current) return;
 
     isLoadingRef.current = true;
-    scrollLockRef.current = true; // 锁定滚动，防止初始加载时跳动
+    scrollLockRef.current = true;
     const params = {
       conversationId: chatData.conversation_id,
       pageSize: 20,
       page: 0,
     };
-
+    
     sendMessage('getConversationMessages', params);
   }, [chatData, sendMessage]);
 
-  // 消息订阅处理 - 接收新消息
+  // 消息订阅处理
   useEffect(() => {
     console.log('设置新消息订阅处理');
     const handleNewMessage = (data: any) => {
       if (data.code === 200) {
         const newData = data.data;
-
-        // 检查消息是否属于当前聊天
-        // if (newData.conversation_id !== currentChatIdRef.current) {
-        //   return;
-        // }
-        const userData = localStorage.getItem("userData")
-        ? JSON.parse(localStorage.getItem("userData")!)
+        const userData = localStorage.getItem("userData") 
+        ? JSON.parse(localStorage.getItem("userData")!) 
         : null;
         sendMessage('get_conversation_info', {conversationId: newData.conversation_id, userId: userData.id});
         console.log('收到新消息:', newData);
-
-        // 直接添加到消息列表
-        dispatch(messagesData({
-          conversationId: newData.conversation_id,
-          messages: [newData]
+        
+        dispatch(messagesData({ 
+          conversationId: newData.conversation_id, 
+          messages: [newData] 
         }));
 
         isSendingRef.current = false;
-
-        // 新消息到达时滚动到底部
-        // setTimeout(() => {
-        //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        // }, 100);
       } else {
         message.error('发送消息失败');
         isSendingRef.current = false;
@@ -224,111 +215,106 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     return () => unsubscribe?.();
   }, [subscribe, dispatch, chatData]);
 
-  // 加载历史消息（优化版）
-  // 加载更多历史消息
-    const loadMoreMessages = useCallback(() => {
-      if (!chatData?.conversation_id || !hasMore || isLoadingRef.current || isSendingRef.current) return;
-      isLoadingRef.current = true;
-      const nextPage = page + 1;
-      const params = {
-        conversationId: chatData.conversation_id,
-        pageSize: 20,
-        page: page,
-      };
-
-      console.log('加载更多历史消息中...',params);
-      sendMessage('getConversationMessages', params);
-    }, [chatData, page, hasMore, sendMessage]);
+  const loadMoreMessages = useCallback(() => {
+    if (!chatData?.conversation_id || !hasMore || isLoadingRef.current || isSendingRef.current) return;
+    isLoadingRef.current = true;
+    const params = {
+      conversationId: chatData.conversation_id,
+      pageSize: 20,
+      page: page,
+    };
+    
+    console.log('加载更多历史消息中...',params);
+    sendMessage('getConversationMessages', params);
+  }, [chatData, page, hasMore, sendMessage]);
 
   useEffect(() => {
     const handleConversationMessages = (data: any) => {
-          if (data.code === 200) {
-            const newData = data.messages;
-            console.log('历史消息数据:', page, data);
+      if (data.code === 200) {
+        const newData = data.messages;
+        console.log('历史消息数据:', page, data);
 
-            if (newData && newData.length > 0) {
-              // const currentMessages = messages[chatData!.conversation_id] || [];
-              // const reversedData = [...newData].reverse();
-
-              if (page === 0) {
-                // 初始加载 - 替换所有消息
-                dispatch(messagesData({
-                  conversationId: chatData!.conversation_id,
-                  messages: newData,
-                  isHistory: true
-                }));
-                setPage(1);
-                console.log('初始加载完成后滚动到底部');
-                // 初始加载完成后滚动到底部
-                messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
-                scrollLockRef.current = false; // 解锁滚动
-              } else {
-                // 加载更多 - 添加到开头
-                dispatch(messagesData({
-                  conversationId: chatData!.conversation_id,
-                  messages: newData,
-                  isHistory: true
-                }));
-                // console.log('历史消息添加完成',[...reversedData, ...currentMessages] );
-                setPage(prev => prev + 1);
-
-                // 保持滚动位置
-                const container = messageContainerRef.current;
-                const prevScrollHeight = container?.scrollHeight || 0;
-                requestAnimationFrame(() => {
-                  if (container) {
-                    const newScrollHeight = container.scrollHeight;
-                    const deltaHeight = newScrollHeight - prevScrollHeight;
-                    console.log(deltaHeight,'deltaHeight')
-                    container.scrollTop = deltaHeight;
-                  }
-                });
-              }
-
-              // 检查是否还有更多消息
-              if (newData.length < 20) {
-                setHasMore(false);
-              }
-            } else {
-              setHasMore(false);
-            }
+        if (newData && newData.length > 0) {
+          if (page === 0) {
+            dispatch(messagesData({ 
+              conversationId: chatData!.conversation_id, 
+              messages: newData,
+              isHistory: true
+            }));
+            setPage(1);
+            
+            setTimeout(() => {
+              messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+              scrollLockRef.current = false;
+            }, 200);
           } else {
-            message.error('获取历史消息失败');
+            dispatch(messagesData({ 
+              conversationId: chatData!.conversation_id, 
+              messages: newData,
+              isHistory: true
+            }));
+            setPage(prev => prev + 1);
+
+            const container = messageContainerRef.current;
+            const prevScrollHeight = container?.scrollHeight || 0;
+            requestAnimationFrame(() => {
+              if (container) {
+                const newScrollHeight = container.scrollHeight;
+                const deltaHeight = newScrollHeight - prevScrollHeight;
+                container.scrollTop = deltaHeight;
+              }
+            });
           }
 
-          setIsLoadingHistory(false);
-          isLoadingRef.current = false;
-        };
-    let unsubscribe = subscribe('conversationMessages', handleConversationMessages);
-    return () => unsubscribe?.();
-  }, [subscribe, chatData, isLoadingHistory]);
-
-  // 滚动处理（优化版）
-  const handleScroll = useCallback(
-      debounce(() => {
-        if (scrollLockRef.current) return;
-
-        const container = messageContainerRef.current;
-        if (!container || isLoadingRef.current || isSendingRef.current) return;
-        console.log('滚动事件触发',container.scrollTop,hasMore);
-        // 检查是否滚动到顶部
-        const scrollTop = container.scrollTop;
-        if (scrollTop === 0 && hasMore) {
-          console.log('加载更多历史消息');
-          loadMoreMessages();
+          if (newData.length < 20) {
+            setHasMore(false);
+          }
+        } else {
+          setHasMore(false);
         }
-      }, 200),
-      [loadMoreMessages, hasMore]
-    );
+      } else {
+        message.error('获取历史消息失败');
+      }
+      
+      setIsLoadingHistory(false);
+      isLoadingRef.current = false;
+    };
 
-  // 处理文件选择
+    const unsubscribe = subscribe('conversationMessages', handleConversationMessages);
+    return () => unsubscribe?.();
+  }, [subscribe, chatData, page]);
+
+  // 滚动处理
+  const handleScroll = useCallback(
+    debounce(() => {
+      if (scrollLockRef.current) return;
+      
+      const container = messageContainerRef.current;
+      if (!container || isLoadingRef.current || isSendingRef.current) return;
+      
+      const scrollTop = container.scrollTop;
+      if (scrollTop === 0 && hasMore) {
+        console.log('加载更多历史消息');
+        loadMoreMessages();
+      }
+    }, 200),
+    [loadMoreMessages, hasMore]
+  );
+
+  // 自动滚动到底部
+  useEffect(() => {
+    if (messagesEndRef.current && !scrollLockRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, chatData]);
+
+  // 文件处理函数
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
 
     const newFiles: FilePreview[] = [];
-
+    
     Array.from(files).forEach(file => {
-      // 检查文件类型
       if (file.type.startsWith('image/')) {
         const id = Math.random().toString(36).substr(2, 9);
         const url = URL.createObjectURL(file);
@@ -346,16 +332,13 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     setFilePreviews(prev => [...prev, ...newFiles]);
   };
 
-  // 处理文件输入变化
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFileSelect(e.target.files);
-    // 重置input，允许选择相同文件
     if (e.target) {
       e.target.value = '';
     }
   };
 
-  // 移除预览文件
   const removePreviewFile = (id: string) => {
     setFilePreviews(prev => {
       const fileToRemove = prev.find(f => f.id === id);
@@ -366,27 +349,17 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     });
   };
 
-  // 发送消息（支持文字和图片）
   const handleSendMessage = useCallback(() => {
     if ((!inputValue.trim() && filePreviews.length === 0) || !chatData) return;
-    // setIsSending(true);
+    
+    const data = localStorage.getItem("userData") 
+      ? JSON.parse(localStorage.getItem("userData")!) 
+      : null;
 
-    let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : localStorage.getItem("userData");
-
-    // 如果有文件，先发送文件
+    // 发送文件
     if (filePreviews.length > 0) {
       filePreviews.forEach(filePreview => {
-        // 这里需要根据你的后端API调整文件上传逻辑
-        // const formData = new FormData();
-        // formData.append('file', filePreview.file);
-        // formData.append('conversation_id', chatData.conversation_id);
-        // formData.append('sender_id', data.id);
-        // formData.append('sender_avatar', data.avatar);
-        // formData.append('sender_name', data.username);
-        // formData.append('receiver_type', chatData.peer_type);
-        // formData.append('receiver_id', chatData.peer_id === data.id ? chatData.user_id : chatData.peer_id);
-        // formData.append('content_type', 'image');
-        let formData = {
+        const formData = {
           file: filePreview.file,
           conversation_id: chatData.conversation_id,
           sender_id: data.id,
@@ -397,9 +370,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
           content_type: 'image',
           content: filePreview.file.name
         };
-        console.log('发送文件消息:', formData);
-
-        // 调用文件上传API
+        
         sendMessage('sendMessage', formData);
       });
     }
@@ -420,7 +391,6 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
       sendMessage('sendMessage', params);
     }
 
-    // 清空输入和预览
     setInputValue('');
     setFilePreviews([]);
   }, [inputValue, chatData, sendMessage, filePreviews]);
@@ -442,27 +412,19 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-
+    
     const files = e.dataTransfer.files;
     handleFileSelect(files);
   };
 
-  // 点击附件按钮
   const handleAttachmentClick = () => {
     fileInputRef.current?.click();
   };
 
-  useEffect(() => {
-    if (messageContainerRef.current?.scrollTop !== 0) {
-      console.log("新消息到达，滚动到底部")
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
-    }
-  }, [messages]);
-
   const showDrawer = () => {
     setOpen(open => !open);
   };
-
+  
   const onClose = () => {
     setOpen(false);
   };
@@ -472,8 +434,8 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
     if (!chatData || !messages[chatData.conversation_id]) return null;
 
     const currentMessages = messages[chatData.conversation_id] || [];
-    const userData = localStorage.getItem("userData")
-      ? JSON.parse(localStorage.getItem("userData")!)
+    const userData = localStorage.getItem("userData") 
+      ? JSON.parse(localStorage.getItem("userData")!) 
       : null;
 
     return currentMessages.map((item: Message, index: number) => {
@@ -484,30 +446,29 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
       // 判断消息类型和归属
       const isGroupMessage = item.receiver_type === 'group';
       const isOwnMessage = item.sender_id === userData?.id;
-      // console.log('渲染消息:', isOwnMessage);
 
       if (isGroupMessage) {
         // 群聊消息
         return (
-          <div key={item.msg_id} className="message-item-wrapper">
+          <div key={item.id} className="message-item-wrapper">
             {showTime && formattedTime && (
               <div className="message-time-divider">
                 <span>{formattedTime}</span>
               </div>
             )}
             <div className={`message-item ${isOwnMessage ? 'sent' : 'received'}`}>
-              {/* {!isOwnMessage && (
-              )} */}
-              <Avatar shape="circle" src={item.sender_avatar} />
+              {!isOwnMessage && (
+                <Avatar shape="circle" src={item.sender_avatar} />
+              )}
               <div className="message-content">
                 {!isOwnMessage && (
                   <div className="sender-name">{item.sender_name}</div>
                 )}
                 <div className="message-bubble">
                   {item.content_type === 'image' ? (
-                    <Image
-                      width={200}
-                      src={item.content}
+                    <Image 
+                      width={200} 
+                      src={item.content} 
                       placeholder={
                         <div className="image-placeholder">图片加载中...</div>
                       }
@@ -517,16 +478,16 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                   )}
                 </div>
               </div>
-              {/* {isOwnMessage && (
+              {isOwnMessage && (
                 <Avatar shape="circle" src={userData.avatar} />
-              )} */}
+              )}
             </div>
           </div>
         );
       } else {
         // 私聊消息
         return (
-          <div key={item.msg_id} className="message-item-wrapper">
+          <div key={item.id} className="message-item-wrapper">
             {showTime && formattedTime && (
               <div className="message-time-divider">
                 <span>{formattedTime}</span>
@@ -539,9 +500,9 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
               <div className="message-content">
                 <div className="message-bubble">
                   {item.content_type === 'image' ? (
-                    <Image
-                      width={200}
-                      src={item.content}
+                    <Image 
+                      width={200} 
+                      src={item.content} 
                       placeholder={
                         <div className="image-placeholder">图片加载中...</div>
                       }
@@ -576,11 +537,11 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
           {/* 消息容器和输入区域 */}
           <div className="chat-content">
             <DrawerGroup open={open} onClose={onClose} chatData={chatData} />
-
+            
             {/* 消息列表容器 */}
-            <div
-              className="message-container scrollbar-hidden"
-              onScroll={handleScroll}
+            <div 
+              className="message-container scrollbar-hidden" 
+              onScroll={handleScroll} 
               ref={messageContainerRef}
             >
               {/* 加载更多指示器 */}
@@ -590,10 +551,10 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                   <span>加载中...</span>
                 </div>
               )}
-
+              
               {/* 消息列表 */}
               {renderMessageList()}
-
+              
               {/* 滚动锚点 */}
               <div ref={messagesEndRef} />
             </div>
@@ -625,7 +586,7 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
             )}
 
             {/* 输入区域 */}
-            <div
+            <div 
               className={`input-area ${isDragging ? 'drag-over' : ''}`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -651,9 +612,9 @@ const ChatWindow: React.FC<{ chatData?: ChatData }> = ({ chatData }) => {
                     }
                   }}
                 />
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
+                <Button 
+                  type="primary" 
+                  icon={<SendOutlined />} 
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() && filePreviews.length === 0}
                   className="send-btn"

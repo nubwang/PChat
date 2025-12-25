@@ -107,6 +107,7 @@ class SocketService {
   private handleConnectError(error: Error): void {
     try {
       // 如果是认证错误，跳转到登录页面
+      console.log('Connection error:', error.message);
       if (error.message.includes('401')) {
         this.navigateTo('/login', 'replace');
         localStorage.removeItem('token'); // 清除无效 token
@@ -120,9 +121,9 @@ class SocketService {
   }
 
   private handleReconnectAttempt(attempt: number): void {
+    console.log(`Reconnection attempt ${attempt}`);
     this.retryCount = attempt;
     store.dispatch(reconnecting());
-    console.log(`Reconnection attempt ${attempt}`);
   }
 
   private handleReconnectFailed(): void {
@@ -131,6 +132,7 @@ class SocketService {
   }
 
   private handlePong(): void {
+    console.log('Pong received');
     const latency = Date.now() - this.lastPingTime;
     store.dispatch(heartbeatAction(latency));
   }

@@ -191,12 +191,16 @@ ipcMain.handle('db:add-conversation', (event, conversations) => {
   return db.addConversation(conversations);
 });
 
-ipcMain.handle('db:add-message', (event, msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size) => {
-  return db.addMessage(msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size);
+ipcMain.handle('db:add-message', (event, messageParams) => {
+  return db.addMessage(messageParams);
 });
 
-ipcMain.handle('db:get-messages-by-conversation', (event, conversation_id, limit, offset) => {
-  return db.getMessagesByConversation(conversation_id, limit, offset);
+ipcMain.handle('db:get-messages', (event, conversation_id, options) => {
+  return db.getMessages(conversation_id, options);
+});
+//addMessageAll
+ipcMain.handle('db:add-message-all', (event, messages) => {
+  return db.addMessageAll(messages);
 });
 
 app.on('window-all-closed', () => {

@@ -35,7 +35,7 @@ class ChatDatabase {
   initSchema() {
     // 启用外键约束
     this.db.pragma("foreign_keys = ON");
-    // this.db.prepare('DROP TABLE IF EXISTS conversations').run();
+    // this.db.prepare('DROP TABLE IF EXISTS messages').run();
     //SELECT * FROM conversations ORDER BY updated_at DESC
 
     // console.log(this.db.prepare(` SELECT * FROM conversations ORDER BY updated_at DESC; `).all())
@@ -132,26 +132,28 @@ class ChatDatabase {
     // 创建消息表
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS messages (
-        msg_id INTEGER PRIMARY KEY,
-        conversation_id INTEGER NOT NULL,
-        sender_id INTEGER NOT NULL,
-        receiver_type TEXT CHECK(receiver_type IN ('user', 'group')) NOT NULL DEFAULT 'user',
-        receiver_id INTEGER NOT NULL,
-        content_type TEXT CHECK(content_type IN (
-          'text', 'image', 'video', 'voice',
-          'file', 'location', 'emoji', 'system'
-        )) NOT NULL,
-        content TEXT,
-        duration INTEGER,
-        file_size INTEGER,
-        status TEXT CHECK(status IN (
-          'sending', 'sent', 'received',
-          'read', 'failed', 'recalled'
-        )) DEFAULT 'sending',
-        timestamp TEXT DEFAULT (datetime('now')),
-        read_time TEXT,
-        FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE
-      )
+          msg_id INTEGER PRIMARY KEY,
+          conversation_id INTEGER NOT NULL,
+          sender_id INTEGER NOT NULL,
+          receiver_type TEXT NOT NULL CHECK (receiver_type IN ('user', 'group')),
+          receiver_id INTEGER NOT NULL,
+          content_type TEXT NOT NULL CHECK (content_type IN ('text', 'image', 'video', 'voice', 'file', 'location', 'emoji', 'system')),
+          content TEXT,
+          duration INTEGER,
+          file_size INTEGER,
+          status TEXT NOT NULL DEFAULT 'sending' CHECK (status IN ('sending', 'sent', 'received', 'read', 'failed', 'recalled')),
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          read_time DATETIME,
+          FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE
+      );
+
+      -- 创建索引
+      CREATE INDEX IF NOT EXISTS idx_receiver ON messages (receiver_type, receiver_id);
+      CREATE INDEX IF NOT EXISTS idx_sender_time ON messages (sender_id, timestamp);
+      CREATE INDEX IF NOT EXISTS idx_conversation_time ON messages (conversation_id, timestamp);
+      -- 重复索引优化（SQLite自动合并相同索引）
+      CREATE INDEX IF NOT EXISTS idx_status ON messages (status);
     `);
 
     // 创建消息撤回表
@@ -351,31 +353,122 @@ class ChatDatabase {
 
   getConversationAll() {
     if (!this.db) return "Database not initialized for user";
-    return this.db.prepare(`
-      SELECT * FROM conversations ORDER BY updated_at DESC;
-    `).all();
-  }
+      return this.db.prepare(`
+        SELECT * FROM conversations ORDER BY updated_at DESC;
+      `).all();
+    }
 
   // 消息相关方法
-  addMessage(msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration = null, file_size = null) {
-    if (!this.db) return "Database not initialized for user";
-    const stmt = this.db.prepare(`
-      INSERT INTO messages
-        (msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size)
-      VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    return stmt.run(msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size);
+  addMessage({ msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration = null, file_size = null, status = 'sending', timestamp = new Date().toISOString() }) {
+    if (!this.db) throw new Error("Database not initialized");
+    const stmt = this.db.prepare(` INSERT INTO messages ( msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size, status, timestamp ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) `);
+    const info = stmt.run( msg_id, conversation_id, sender_id, receiver_type, receiver_id, content_type, content, duration, file_size, status, timestamp );
+    
+    return { msg_id: msg_id || info.lastInsertRowid, timestamp };
   }
 
-  getMessagesByConversation(conversation_id, limit = 20, offset = 0) {
-    if (!this.db) return "Database not initialized for user";
-    return this.db.prepare(`
-      SELECT * FROM messages
+  // 在ChatDatabase类中新增批量插入方法
+  addMessageAll(messages) {
+    if (!this.db) throw new Error("Database not initialized");
+    
+    // 参数验证
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new Error("Messages must be a non-empty array");
+    }
+
+    // 使用事务保证原子性
+    return this.db.transaction(() => {
+      // 创建参数化插入语句
+      const stmt = this.db.prepare(`
+        INSERT INTO messages (
+          msg_id,
+          conversation_id,
+          sender_id,
+          receiver_type,
+          receiver_id,
+          content_type,
+          content,
+          duration,
+          file_size,
+          status,
+          timestamp
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      // 批量绑定参数
+      for (const msg of messages) {
+        stmt.run(
+          msg.msg_id || null,
+          msg.conversation_id,
+          msg.sender_id,
+          msg.receiver_type,
+          msg.receiver_id,
+          msg.content_type,
+          msg.content,
+          msg.duration || null,
+          msg.file_size || null,
+          msg.status || 'sending',  // 默认状态
+          msg.timestamp || new Date().toISOString()
+        );
+      }
+    })();
+  }
+
+  getMessages(conversation_id, options = {}) {
+    const { 
+      limit = 20, 
+      offset = 0,
+      before = null,
+      after = null,
+      sender_id = null,
+      status = null
+    } = options;
+
+    if (!this.db) throw new Error("Database not initialized");
+
+    let query = `
+      SELECT 
+        msg_id,
+        content_type,
+        content,
+        timestamp,
+        status,
+        (SELECT username FROM users WHERE id = messages.sender_id) AS sender_name
+      FROM messages
       WHERE conversation_id = ?
+    `;
+    
+    const params = [conversation_id];
+    let conditions = [];
+
+    // 添加时间范围过滤
+    if (before) conditions.push(`timestamp < ?`);
+    if (after) conditions.push(`timestamp > ?`);
+    
+    // 添加发送者过滤
+    if (sender_id) conditions.push(`sender_id = ?`);
+    
+    // 添加状态过滤
+    if (status) conditions.push(`status = ?`);
+
+    // 组合查询条件
+    if (conditions.length > 0) {
+      query += ` AND ${conditions.join(' AND ')}`;
+      if (before) params.push(before);
+      if (after) params.push(after);
+      if (sender_id) params.push(sender_id);
+      if (status) params.push(status);
+    }
+
+    // 添加排序和分页
+    query += `
       ORDER BY timestamp DESC
-      LIMIT ? OFFSET ?
-    `).all(conversation_id, limit, offset);
+      LIMIT ? 
+      OFFSET ?
+    `;
+    params.push(limit, offset);
+
+    return this.db.prepare(query).all(...params);
   }
 }
 

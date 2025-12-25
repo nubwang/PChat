@@ -14,6 +14,7 @@ import { changeContersionId, setChatData, updateConversation } from '../../store
 import type { MenuProps } from 'antd';
 import AddFriend from "./addFriend";
 import AddGroup from "./addGroup";
+import { formatChatMessage } from '../../../static/utils/time';
 
 const { Search,TextArea } = Input;
 
@@ -82,8 +83,9 @@ const ChatList: React.FC = () => {
         groupName: groupName.join(","),
         avatar: JSON.stringify(avatar),
       }
-      sendWithReconnect("createGroup", groupData);
-  }, [sendWithReconnect, messageApi]);
+      console.log(groupData,'groupData')
+      sendMessage("createGroup", groupData);
+  }, [sendMessage, messageApi]);
 
   const init = useCallback(() => {
     let data = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : null;
@@ -109,7 +111,6 @@ const ChatList: React.FC = () => {
       console.log(4)
       if (res.code === 200) {
         const data = res.data;
-        console.log(data,'0000000000000000000')
         dispatch(updateConversation(data));
       } else {
         messageApi.error(res.message); // 修正为 res.message
@@ -127,9 +128,10 @@ const ChatList: React.FC = () => {
     });
     // groupCreated
     const subscriptions4 = subscribe("groupCreated", (res) => {
-      console.log(3)
+      console.log(3,"res",res,slefInfo)
+      let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
       if(res.code == 200){
-        sendMessage('get_conversation_info', {conversationId: res.conversationId, userId: slefInfo.id});
+        sendMessage('get_conversation_info', {conversationId: res.conversationId, userId: data.id});
       }
     });
   return () => {
@@ -170,7 +172,8 @@ const ChatList: React.FC = () => {
     setSelectedKey(item.conversation_id);
     setChatWindowData(item);
     // activate_conversation
-    sendMessage("activate_conversation", { conversationId: item.conversation_id, userId: slefInfo.id });
+    let data = localStorage.getItem("userData")?JSON.parse(localStorage.getItem("userData")):localStorage.getItem("userData");
+    sendMessage("activate_conversation", { conversationId: item.conversation_id, userId: data.id });
   }
 
 
@@ -268,7 +271,7 @@ const ChatList: React.FC = () => {
                   <Avatar src={item.avatar} shape="square" />
                 }
                 title={item.username}
-                description={item.last_msg_content?item.last_msg_content:"暂无消息"}
+                description={formatChatMessage(item.last_msg_content)}
                 onClick={() => {
                   listFn(item);
                 }}

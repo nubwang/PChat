@@ -9,13 +9,16 @@
   --disabled-bg: #f0f0f0;
   --disabled-border: #d9d9d9;
   --disabled-text: rgba(0, 0, 0, 0.25);
+  --primary-color: #1890ff;
 }
 
+/* 基础布局 */
 .chat-window {
   flex-grow: 1;
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: #fff;
 }
 
 .noChatData {
@@ -32,195 +35,290 @@
   height: 100%;
 }
 
+/* 头部区域 */
 .chat-header {
-  padding: 10px 20px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .chat-title {
-  line-height: 32px;
-  margin-left: 10px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-color);
 }
 
+/* 内容区域 */
 .chat-content {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: calc(100% - 53px); /* 减去header高度 */
+  height: calc(100% - 57px);
+  background: var(--bg-color);
 }
 
 /* 消息容器 */
 .message-container {
   flex: 1;
-  padding: 20px;
+  padding: 16px;
   overflow-y: auto;
-  background-color: var(--bg-color);
+  background: var(--bg-color);
 }
 
+.scrollbar-hidden {
+  overflow: auto;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* 消息项包装器 */
+.message-item-wrapper {
+  margin-bottom: 52px;
+}
+
+/* 消息时间分隔符 */
+.message-time-divider {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.message-time-divider span {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--time-color);
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 12px;
+  display: inline-block;
+  backdrop-filter: blur(10px);
+}
+
+/* 消息项布局 */
 .message-item {
   display: flex;
-  margin-bottom: 15px;
-  width: 100%;
-}
-
-.message-item.received {
-  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 4px 0;
 }
 
 .message-item.sent {
-  justify-content: flex-end;
+  flex-direction: row-reverse;
 }
 
+/* 消息内容区域 */
 .message-content {
-  max-width: 60%;
-  padding: 8px 12px;
-  margin: 0 10px;
-  border-radius: 4px;
-  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  max-width: 65%;
+}
+
+/* 群聊发送者名称 */
+.sender-name {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  padding: 0 8px;
+  font-weight: 500;
+}
+
+.message-item.sent .sender-name {
+  text-align: right;
+}
+
+/* 消息气泡 */
+.message-bubble {
+  max-width: 100%;
   position: relative;
 }
 
-.received .message-content {
-  background-color: var(--received-bg);
-  border: 1px solid var(--border-color);
+.message-text {
+  padding: 12px 16px;
+  border-radius: 18px;
+  word-wrap: break-word;
+  line-height: 1.4;
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.sent .message-content {
-  background-color: var(--sent-bg);
-  border: 1px solid var(--sent-bg);
+/* 发送的消息样式 */
+.message-item.sent .message-text {
+  background: var(--sent-bg);
+  color: #000;
+  border-bottom-right-radius: 4px;
 }
 
-.message-time {
-  font-size: 12px;
-  color: var(--time-color);
-  margin-top: 4px;
-  text-align: right;
+/* 接收的消息样式 */
+.message-item.received .message-text {
+  background: var(--received-bg);
+  color: var(--text-color);
+  border-bottom-left-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 图片消息样式 */
+.message-bubble .ant-image {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.message-bubble .ant-image-img {
+  display: block;
+}
+
+.image-placeholder {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+/* 头像样式 */
+.message-item .ant-avatar {
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 输入区域 */
 .input-area {
-  padding: 16px;
+  padding: 16px 20px;
   border-top: 1px solid var(--border-color);
-  background-color: #f7f7f7;
+  background-color: #fafafa;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
-.inputBox {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.input-area.drag-over {
+  background: rgba(24, 144, 255, 0.05);
+  border: 2px dashed var(--primary-color);
+  border-radius: 8px;
 }
 
+/* 输入工具栏 */
 .input-tools {
   display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 16px;
+  align-items: center;
 }
 
 .input-tools .anticon {
   font-size: 20px;
   color: var(--hover-color);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
 }
 
 .input-tools .anticon:hover {
-  color: var(--text-color);
+  color: var(--primary-color);
+  background: rgba(24, 144, 255, 0.1);
 }
 
-.ant-input {
-  resize: none;
-  border: none;
-  box-shadow: none;
-  background-color: #fff;
+/* 输入框区域 */
+.inputBox {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+}
+
+.inputBox:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.inputIN {
   flex: 1;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  resize: none;
+  min-height: 24px !important;
+  max-height: 120px;
+  padding: 4px 0 !important;
 }
 
-.chat-window .ant-btn {
-  margin-left: 10px;
-  background-color: transparent;
-  border-color: transparent;
+.inputIN:focus {
+  box-shadow: none !important;
 }
 
-.chat-window .ant-btn:disabled {
-  background-color: var(--disabled-bg);
-  border-color: var(--disabled-border);
-  color: var(--disabled-text);
-}
-/* 附件预览区域 */
-.attachment-preview {
-  display: flex;
-  padding: 10px;
-  border-top: 1px solid #eee;
-  overflow-x: auto;
-}
-
-.attachment-item {
-  position: relative;
-  margin-right: 10px;
+/* 发送按钮 */
+.send-btn {
+  align-self: flex-end;
+  background: var(--primary-color) !important;
+  border: none !important;
+  border-radius: 16px !important;
+  height: 32px;
+  padding: 0 16px !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-.attachment-image {
-  max-height: 80px;
-  border-radius: 4px;
-  cursor: pointer;
+.send-btn:hover {
+  background: #40a9ff !important;
+  transform: translateY(-1px);
 }
 
-.remove-btn {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: #ff4d4f;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.send-btn:disabled {
+  background: var(--disabled-bg) !important;
+  color: var(--disabled-text) !important;
+  transform: none;
 }
 
-/* 消息附件 */
-.message-attachment {
-  margin-top: 5px;
-}
-
-.message-image {
-  max-width: 300px;
-  max-height: 200px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* 文件预览区域样式 */
+/* 文件预览区域 */
 .file-previews {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border-top: 1px solid #e8e8e8;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid var(--border-color);
 }
 
 .file-preview-item {
   position: relative;
   display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.file-preview-item:hover {
+  transform: translateY(-2px);
+}
+
+.file-preview-item .ant-image {
+  display: block;
+}
+
+.file-preview-item .ant-image-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
 }
 
 .remove-file-btn {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -6px;
+  right: -6px;
   width: 20px;
   height: 20px;
-  background: rgba(0, 0, 0, 0.7);
+  background: #ff4d4f;
   border: none;
   border-radius: 50%;
   color: white;
@@ -228,35 +326,123 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
+  opacity: 0.9;
+  transition: all 0.2s ease;
 }
 
 .remove-file-btn:hover {
-  background: rgba(0, 0, 0, 0.9);
+  background: #ff7875;
+  opacity: 1;
+  transform: scale(1.1);
 }
 
-/* 拖拽样式 */
-.input-area.drag-over {
-  background: rgba(24, 144, 255, 0.1);
-  border: 2px dashed #1890ff;
+/* 加载更多指示器 */
+.load-more-indicator {
+  text-align: center;
+  padding: 20px;
+  color: var(--time-color);
+  font-size: 13px;
 }
 
-/* 发送按钮容器 */
-.send-button-container {
-  padding: 8px 16px;
-  display: flex;
-  justify-content: flex-end;
-  background: #f5f5f5;
-  border-top: 1px solid #e8e8e8;
+.load-more-indicator .ant-spin {
+  margin-right: 8px;
 }
 
-/* 消息输入区域调整 */
-.input-tools {
-  background: #f5f5f5;
-  padding: 8px 16px;
-  border-bottom: 1px solid #e8e8e8;
+/* 空状态 */
+.noChatData .ant-empty {
+  padding: 40px 0;
 }
 
-.inputBox {
-  padding: 8px 16px;
-  background: white;
+.noChatData .ant-empty-image {
+  height: 80px;
+  margin-bottom: 16px;
+}
+
+.noChatData .ant-empty-description {
+  color: var(--time-color);
+  font-size: 14px;
+}
+
+/* 自定义标题栏样式 */
+.custom-title-bar-no {
+  -webkit-app-region: no-drag;
+}
+
+.custom-title-bar {
+  -webkit-app-region: drag;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .message-content {
+    max-width: 80%;
+  }
+  
+  .input-area {
+    padding: 12px 16px;
+  }
+  
+  .chat-header {
+    padding: 10px 16px;
+  }
+  
+  .message-container {
+    padding: 12px;
+  }
+}
+
+/* 动画效果 */
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-item-wrapper {
+  animation: messageAppear 0.3s ease-out;
+}
+
+/* 滚动条美化（在需要时显示） */
+.message-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.message-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 消息状态指示器 */
+.message-status {
+  font-size: 12px;
+  color: var(--time-color);
+  text-align: right;
+  margin-top: 2px;
+  padding: 0 4px;
+}
+
+/* 时间显示优化 */
+.message-time {
+  font-size: 11px;
+  color: var(--time-color);
+  margin-top: 4px;
+  text-align: right;
+  opacity: 0.8;
+}
+
+.message-item.received .message-time {
+  text-align: left;
 }
